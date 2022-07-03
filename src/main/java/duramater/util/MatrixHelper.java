@@ -43,4 +43,12 @@ public class MatrixHelper {
 
         return dest;
     }
+
+    public static void print(String caption,double[][] src) {
+        System.out.printf("--- %s: %dx%d\n",caption,src.length,src[0].length);
+        Arrays.stream(src).forEach(row -> {
+            Arrays.stream(row).forEach(cell -> System.out.printf("%2.0f ",cell));
+            System.out.println("");
+        });
+    }
 }
