@@ -1,10 +1,9 @@
-package duramater.util;
+package duramater.mlp.iris;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-public class MatrixHelper {
+public class IrisMatrix {
 
     public static double[][] slice(double[][] src,int startRow, int endRow) {
         // Method 1:

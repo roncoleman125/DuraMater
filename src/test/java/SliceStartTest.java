@@ -9,7 +9,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import duramater.util.MatrixHelper;
+import duramater.mlp.iris.IrisMatrix;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -38,7 +38,7 @@ public class SliceStartTest {
                 { 4,  5, 6}
         };
 
-        final double[][] slice = MatrixHelper.slice(TEST_MATRIX,0,2);
+        final double[][] slice = IrisMatrix.slice(TEST_MATRIX,0,2);
 
         int numRows = slice.length;
         assert(numRows == EXPECTED_MATRIX.length);
@@ -52,6 +52,6 @@ public class SliceStartTest {
             });
         });
 
-        MatrixHelper.print(this.getClass().getName()+" slice",slice);
+        IrisMatrix.print(this.getClass().getName()+" slice",slice);
     }
 }

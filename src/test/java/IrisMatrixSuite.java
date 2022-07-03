@@ -12,4 +12,4 @@ import org.junit.runners.Suite;
         SliceStartTest.class,
 })
 
-public class MatrixHelperSuite {}
+public class IrisMatrixSuite {}

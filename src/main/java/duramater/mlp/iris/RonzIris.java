@@ -23,8 +23,8 @@
 package duramater.mlp.iris;
 
 import duramater.util.EncogHelper;
-import static duramater.util.MatrixHelper.slice;
-import static duramater.util.MatrixHelper.transpose;
+import static duramater.mlp.iris.IrisMatrix.slice;
+
 import org.apache.commons.math3.stat.StatUtils;
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationTANH;
