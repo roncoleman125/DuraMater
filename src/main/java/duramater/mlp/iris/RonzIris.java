@@ -192,6 +192,7 @@ public class RonzIris {
 
         TRAINING_INPUTS = slice(transpose(inputsNormalized),0,120);
         TESTING_INPUTS = slice(transpose(inputsNormalized),120,150);
+
 //
 //        double[][] inputs = Stream.of(csvDicer.getNames())
 //                .filter(name -> !name.equals("Species"))

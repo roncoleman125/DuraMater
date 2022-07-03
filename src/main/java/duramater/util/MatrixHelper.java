@@ -1,22 +1,31 @@
 package duramater.util;
 
+import java.util.Arrays;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class MatrixHelper {
 
     public static double[][] slice(double[][] src,int startRow, int endRow) {
-        int numRows = endRow-startRow;
-        assert(src.length >= numRows);
+        // Method 1:
+        double[][] dest = Arrays.copyOfRange(src,startRow,endRow);
 
-        int numCols = src[0].length;
+        // Method 2:
+//        double[][] dest = Stream.of(src, startRow, endRow).toArray(double[][]::new);
 
-        double[][] dest = new double[numRows][numCols];
-
-        IntStream.range(0,numCols).forEach(colno -> {
-            IntStream.range(startRow,startRow+numRows).forEach(rowno -> {
-                dest[rowno-startRow][colno] = src[rowno][colno];
-            });
-        });
+        // Method 3:
+//        int numRows = endRow-startRow;
+//        assert(src.length >= numRows);
+//
+//        int numCols = src[0].length;
+//
+//        double[][] dest = new double[numRows][numCols];
+//
+//        IntStream.range(0,numCols).forEach(colno -> {
+//            IntStream.range(startRow,startRow+numRows).forEach(rowno -> {
+//                dest[rowno-startRow][colno] = src[rowno][colno];
+//            });
+//        });
         return dest;
     }
 
