@@ -36,7 +36,7 @@ public class Os {
 
         dataFrame.shuffle();
 
-        DataFrame df = dataFrame.getStringColumn("Species").transform(new Species2CatsTransformer("Species"));
+        DataFrame df = dataFrame.getStringColumn("Species").transform(new CsvDicer.Species2CatsTransformer("Species"));
         dataFrame.replaceColumn("Species",df.getColumn("Species"));
         System.out.println(dataFrame.size());
 

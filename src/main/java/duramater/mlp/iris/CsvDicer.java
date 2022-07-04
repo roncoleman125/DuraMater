@@ -24,9 +24,12 @@ package duramater.mlp.iris;
 
 import de.unknownreality.dataframe.DataFrameColumn;
 import de.unknownreality.dataframe.DataRow;
+import de.unknownreality.dataframe.column.StringColumn;
 import de.unknownreality.dataframe.csv.CSVReader;
 import de.unknownreality.dataframe.csv.CSVReaderBuilder;
 import de.unknownreality.dataframe.DataFrame;
+import de.unknownreality.dataframe.transform.ColumnDataFrameTransform;
+
 import java.io.File;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,8 +37,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Loads and "dices" iris data.
- *
+ * Dice and load the iris data.
+ * @see <a href="https://github.com/nRo/DataFrame>DataFrame</a>
  * @author Ron.Coleman
  */
 public class CsvDicer {
@@ -46,6 +49,7 @@ public class CsvDicer {
             "Petal Width",
             "Species"
     };
+
     /**
      * Names by which we refer to the columns, not necessarily the names in the CSV file.
      */
@@ -73,7 +77,7 @@ public class CsvDicer {
     /** Used to load the data */
     DataFrame frame;
 
-    /** Actual iris observations in numerical form */
+    /** Actual iris observations in "diced" numerical form */
     double[][] observations;
 
     /**
@@ -84,10 +88,13 @@ public class CsvDicer {
         this.path = path;
     }
 
+    public double[][] dice() {
+        return dice(true);
+    }
     /**
      * Loads the iris data from the CSV file.
      */
-    public double[][] dice() {
+    public double[][] dice(boolean shuffle) {
         // Id,Sepal Length,Sepal Width,Petal Length,Petal Width,Species
         CSVReader csvReader = CSVReaderBuilder.create()
                 .containsHeader(true)
@@ -101,7 +108,8 @@ public class CsvDicer {
                 .build();
         frame = DataFrame.load(new File(path), csvReader/*FileFormat.CSV*/);
 
-        frame.shuffle();
+        if(shuffle)
+            frame.shuffle();
 
         DataFrame df = frame.getStringColumn(COL_NAMES[4]).transform(new Species2CatsTransformer(COL_NAMES[4]));
         frame.replaceColumn(COL_NAMES[4],df.getColumn(COL_NAMES[4]));
@@ -114,7 +122,7 @@ public class CsvDicer {
     /**
      * Populates the observation array from the frame.
      */
-    void populate() {
+    protected void populate() {
         int numCols = frame.getColumns().size();
         int numRows = frame.getRows().size();
 
@@ -187,5 +195,28 @@ public class CsvDicer {
             });
             System.out.println("");
         });
+    }
+
+    public static class Species2CatsTransformer implements ColumnDataFrameTransform<StringColumn> {
+        static Map<String, Integer> species2Cats = Stream.of(new Object[][]{
+                {"setosa", 0},
+                {"virginica", 1},
+                {"versicolor", 2}
+        }).collect(Collectors.toMap(row -> (String) row[0], row -> (Integer) row[1]));
+
+        protected String name;
+        public Species2CatsTransformer(String name) {
+            this.name = name;
+        }
+        @Override
+        public DataFrame transform(StringColumn species) {
+            DataFrame df = DataFrame.create().addDoubleColumn(name);
+
+            species.forEach( specie -> {
+                df.append(species2Cats.get(specie));
+            });
+
+            return df;
+        }
     }
 }

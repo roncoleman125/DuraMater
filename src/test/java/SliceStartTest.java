@@ -20,7 +20,8 @@ import java.util.stream.IntStream;
  * @author Ron.Coleman
  * @see <a href="https://www.softwaretestinghelp.com/juni-test-execution-order/">JUnit Test Execution Order</a>
  */
-@FixMethodOrder(MethodSorters.DEFAULT)
+//@FixMethodOrder(MethodSorters.DEFAULT)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SliceStartTest {
     @Test
     public void test() {
