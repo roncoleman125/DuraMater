@@ -1,4 +1,4 @@
-package duramater.mlp;
+package duramater.mlp.misc;
 
 import org.encog.util.arrayutil.NormalizationAction;
 import org.encog.util.arrayutil.NormalizedField;

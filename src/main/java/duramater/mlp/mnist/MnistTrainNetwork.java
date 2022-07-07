@@ -1,5 +1,8 @@
-package duramater.mlp;
+package duramater.mlp.mnist;
 
+import duramater.knn.mnist.model.MnistArrays;
+import duramater.knn.mnist.model.MnistDataReader;
+import duramater.knn.mnist.model.MnistMatrix;
 import duramater.util.EncogHelper;
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
@@ -8,7 +11,10 @@ import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.ml.train.BasicTraining;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
-import org.encog.neural.networks.training.propagation.back.Backpropagation;
+import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
+import org.encog.persist.EncogDirectoryPersistence;
+
+import java.io.File;
 
 /**
  * XOR: This example is essentially the "Hello World" of neural network
@@ -28,7 +34,7 @@ import org.encog.neural.networks.training.propagation.back.Backpropagation;
  * @author Ron Coleman
  * @date 24 Oct 2017
  */
-public class XorHelloWorld {
+public class MnistTrainNetwork {
     /**
      * These learning parameters generally give good results according to literature,
      * that is, the training algorithm converges with the tolerance below.
@@ -58,32 +64,32 @@ public class XorHelloWorld {
      * The main method.
      * @param args No arguments are used.
      */
-    public static void main(final String args[]) {
-        // Instantiate the network
+    public static void main(final String args[]) throws Exception {
+        ////////////////
+        MnistMatrix[] mnistTrainMatrix = new MnistDataReader().readData("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
+        MnistArrays trainingArrays = new MnistArrays(mnistTrainMatrix);
+
+//        double[][] trainInputs = trainingArrays.getInputs(60000);
+//        double[][] trainIdeals = trainingArrays.getIdeals(60000);
+        double[][] trainInputs = trainingArrays.getInputs(2000);
+        double[][] trainIdeals = trainingArrays.getIdeals(2000);
+
         BasicNetwork network = new BasicNetwork();
 
-        // Input layer plus bias node
-        network.addLayer(new BasicLayer(null, true, 2));
+        network.addLayer(new BasicLayer(null, true, 28*28));
+        network.addLayer(new BasicLayer(new ActivationSigmoid(), true, 100));
+        network.addLayer(new BasicLayer(new ActivationSigmoid(), true, 75));
+        network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 9));
 
-        // Hidden layer plus bias node
-        network.addLayer(new BasicLayer(new ActivationSigmoid(), true, 2));
-
-        // Output layer
-        network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 1));
-
-        // No more layers to be added
         network.getStructure().finalizeStructure();
 
-        // Randomize the weights
         network.reset();
 
-        EncogHelper.describe(network);
-
-        // Create training observations
-        MLDataSet trainingSet = new BasicMLDataSet(XOR_INPUTS, XOR_IDEALS);
+        MLDataSet trainingSet = new BasicMLDataSet(trainInputs, trainIdeals);
 
         // Use a training object for the learning algorithm, backpropagation.
-        final BasicTraining training = new Backpropagation(network, trainingSet,LEARNING_RATE,LEARNING_MOMENTUM);
+        final BasicTraining training = new ResilientPropagation(network,trainingSet);
+//      final BasicTraining training = new Backpropagation(network, trainingSet,LEARNING_RATE,LEARNING_MOMENTUM);
 
         // Set learning batch size: 0 = batch, 1 = online, n = batch size
         // See org.encog.neural.networks.training.BatchSize
@@ -91,21 +97,40 @@ public class XorHelloWorld {
 
         int epoch = 0;
 
+        double minError = Double.MAX_VALUE;
+        int sameCount = 0;
+        double error = 0.0;
+        final int MAX_SAME_COUNT = 5*EncogHelper.LOG_FREQUENCY;
         EncogHelper.log(epoch, training,false);
         do {
             training.iteration();
 
             epoch++;
 
-            EncogHelper.log(epoch, training,false);
+            error = training.getError();
 
-        } while (training.getError() > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
+            if(error < minError) {
+                minError = error;
+                sameCount = 1;
+            }
+            else
+                sameCount++;
+
+            if(sameCount >= MAX_SAME_COUNT)
+                break;
+
+            EncogHelper.log(epoch, training,false);
+        } while (error > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
+
+        EncogHelper.log(epoch, training,true);
 
         training.finishTraining();
 
-        EncogHelper.log(epoch, training,true);
-        EncogHelper.report(trainingSet, network);
-        EncogHelper.describe(network);
+        EncogDirectoryPersistence.saveObject(new File("/users/roncoleman/tmp/encogmnist.bin"),network);
+
+//        EncogHelper.log(epoch, training,true);
+//        EncogHelper.report(trainingSet, network);
+//        EncogHelper.describe(network);
 
         Encog.getInstance().shutdown();
     }

@@ -10,6 +10,8 @@ public class EncogHelper {
     /** Maximum iterations to run */
     public final static long MAX_EPOCHS = 100000L;
 
+    public final static int LOG_FREQUENCY = 100;
+
     public final static boolean DEBUG = Boolean.parseBoolean(System.getProperty("debug","false"));
 
     /**
@@ -119,17 +121,15 @@ public class EncogHelper {
      * @param done  True if the training is done
      */
     public static void log(int epoch, BasicTraining train, boolean done) {
-        final int FREQUENCY = 100;
-
         // Report only the header
         if (epoch == 0)
             System.out.printf("%8s %6s\n", "epoch", "error");
 
-        else if (epoch == 1 || (!done && (epoch % FREQUENCY) == 0)) {
+        else if (epoch == 1 || (!done && (epoch % LOG_FREQUENCY) == 0)) {
             System.out.printf("%8d %6.4f\n", epoch, train.getError());
         }
         // Report only if we haven't just reported
-        else if (done && (epoch % FREQUENCY) != 0)
+        else if (done && (epoch % LOG_FREQUENCY) != 0)
             System.out.printf("%8d %6.4f\n", epoch, train.getError());
 
         if (epoch >= MAX_EPOCHS && done)
