@@ -1,0 +1,7 @@
+# Trained on 2000 images
+tests: 10000 hits: 9028
+ratio: 0.9028
+
+# Trained on 60000 images
+tests: 10000 hits: 9691
+ratio: 0.9691
