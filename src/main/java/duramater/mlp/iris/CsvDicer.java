@@ -71,6 +71,9 @@ public class CsvDicer {
             {"versicolor", 2}
     }).collect(Collectors.toMap(row -> (String) row[0], row -> (Integer) row[1]));
 
+    static Map<Integer,String> cat2Species =
+            species2Cat.keySet().stream().collect(Collectors.toMap(key -> (Integer) species2Cat.get(key), key -> key));
+
     /** Path to the CSV file */
     String path;
 
@@ -166,9 +169,14 @@ public class CsvDicer {
      * @param plaintext Plaintext
      * @return Integer encoding.
      */
-    public int compile(String plaintext) {
+    public static int compile(String plaintext) {
         return species2Cat.get(plaintext);
     }
+
+    public static String decompile(int cat) { return cat2Species.get(cat); }
+
+
+
 
     /**
      * Runs a unit test of the load and dice.
