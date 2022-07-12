@@ -41,18 +41,25 @@ import static duramater.mlp.iris.IrisMatrix.transpose;
 
 /**
  * This program was evolved from XorHelloWorld to train and test an MLP on iris data.
+ *
  * @author Ron.Coleman
  * @date 29.Oct.2019
  */
 public class RonzIrisK1n {
-    record Candidate(double[] pt, double dist, int no) {}
+    record Candidate(int no, double[] pt, double dist) {
+    }
 
-    public static boolean DEBUGGING = Boolean.parseBoolean(System.getProperty("debug","false"));
+    record Nearest(Candidate candidate, Map<Integer, Integer> votes) {
+    }
+
+    public static boolean DEBUGGING = Boolean.parseBoolean(System.getProperty("debug", "false"));
 
     final static double NORMALIZED_HI = 1;
     final static double NORMALIZED_LO = -1;
 
-    /** Error tolerance */
+    /**
+     * Error tolerance
+     */
     public final static double TOLERANCE = 0.01;
 
     // Matrices will contain training & pt data
@@ -68,6 +75,7 @@ public class RonzIrisK1n {
 
     /**
      * The main method.
+     *
      * @param args No arguments are used.
      */
     public static void main(final String args[]) {
@@ -81,14 +89,14 @@ public class RonzIrisK1n {
         double[] output = new double[2];
 
         // Test each row in the pt data
-        for(int k = 0; k < TESTING_INPUTS.length; k++) {
+        for (int k = 0; k < TESTING_INPUTS.length; k++) {
             // Get the input
             double[] target = TESTING_INPUTS[k];
 
-            Candidate nearest = getNearest(target,false);
+            Nearest nearest = getNearest(target);
 
             // Get the output and decode it to a subtype index.
-            int predictedno = eq.decode(TRAINING_IDEALS[nearest.no()]);
+            int predictedno = eq.decode(TRAINING_IDEALS[nearest.candidate().no()]);
 
             // Get the ideal and decode it to a subtype index.
             double[] ideals = TESTING_IDEALS[k];
@@ -99,14 +107,15 @@ public class RonzIrisK1n {
             String predicted = CsvDicer.cat2Species.get(predictedno);
 
             // If the string names aren't equal, record a miss.
-            System.out.printf("%2d %11s %11s ", (k+1), ideal, predicted);
+            System.out.printf("%2d %11s %11s ", (k + 1), ideal, predicted);
 
-            if(!predicted.equals(ideal)) {
+            if (!predicted.equals(ideal)) {
                 System.out.println("MISSED!");
-                getNearest(target,true);
+                nearest.votes().entrySet().stream().forEach(entry -> {
+                    System.out.printf("candidate: %d votes: %d\n", entry.getKey(), entry.getValue());
+                });
                 missed++;
-            }
-            else
+            } else
                 System.out.print("\n");
         }
 
@@ -114,51 +123,52 @@ public class RonzIrisK1n {
         double tried = 30;
         double rate = missed / tried;
 
-        double success = (1.0-rate) * 100;
-        System.out.printf("success rate = %d/%d (%4.1f%%)", (int) (tried-missed), (int) tried, success);
+        double success = (1.0 - rate) * 100;
+        System.out.printf("success rate = %d/%d (%4.1f%%)", (int) (tried - missed), (int) tried, success);
 
         Encog.getInstance().shutdown();
     }
 
-    static Candidate getNearest(double[] target,boolean report) {
+    static Nearest getNearest(double[] target) {
+        // Sort candidates by distance to target
         List<Candidate> candidates =
-                IntStream.range(0,TRAINING_INPUTS.length)
-                        .mapToObj(no -> new Candidate(TRAINING_INPUTS[no],getDist(TRAINING_INPUTS[no],target),no))
+                IntStream.range(0, TRAINING_INPUTS.length)
+                        .mapToObj(no -> new Candidate(no, TRAINING_INPUTS[no], getDist(TRAINING_INPUTS[no], target)))
                         .sorted((obj1, obj2) -> {
-                            if(obj1.dist() > obj2.dist())
+                            if (obj1.dist() > obj2.dist())
                                 return 1;
                             else
                                 return -1;
                         }).collect(Collectors.toList());
+        ///////////////////////
+        // Uncomment below to return the simple nearest.
 //        Candidate nearest = candidates.get(0);
 //        return nearest;
-        Map<Integer,Integer> votes = new HashMap<>();
-        IntStream.range(0,5).forEach(idx -> {
+
+        ///////////////////////
+        // Uncomment below to use K-nearest algorithm
+        final int k = 5;
+        Map<Integer, Integer> votes = new HashMap<>();
+        IntStream.range(0, k).forEach(idx -> {
             int candidate = eq.decode(TRAINING_IDEALS[candidates.get(idx).no()]);
-            int freq = votes.getOrDefault(candidate,0);
-            votes.put(candidate,freq+1);
+            int freq = votes.getOrDefault(candidate, 0);
+            votes.put(candidate, freq + 1);
         });
 
-        int winner = votes.entrySet().stream().sorted((e1,e2) -> {
-            if(e1.getValue() > e2.getValue())
+        int winner = votes.entrySet().stream().sorted((e1, e2) -> {
+            if (e1.getValue() > e2.getValue())
                 return 1;
             else
                 return -1;
         }).collect(Collectors.toList()).get(0).getKey();
 
-        if(report) {
-            votes.entrySet().stream().forEach(entry -> {
-                System.out.printf("candidate: %d votes: %d\n",entry.getKey(),entry.getValue());
-            });
-        }
-
         Candidate popular = candidates.get(winner);
-        return popular;
+        return new Nearest(popular, votes);
     }
 
     public static double getDist(double[] p1, double[] p2) {
-        double l2 = IntStream.range(0,p1.length)
-                             .mapToDouble(idx -> (p1[idx]-p2[idx])*(p1[idx]-p2[idx])).sum();
+        double l2 = IntStream.range(0, p1.length)
+                .mapToDouble(idx -> (p1[idx] - p2[idx]) * (p1[idx] - p2[idx])).sum();
         return l2;
     }
 
@@ -169,17 +179,17 @@ public class RonzIrisK1n {
         CsvDicer csvDicer = new CsvDicer("data/iris.csv");
         double[][] observations = csvDicer.dice();
 
-        double[][] inputs = normalize(observations,0,4);
+        double[][] inputs = normalize(observations, 0, 4);
 
-        TRAINING_INPUTS = slice(transpose(inputs),0,120);
-        TESTING_INPUTS = slice(transpose(inputs),120,150);
+        TRAINING_INPUTS = slice(transpose(inputs), 0, 120);
+        TESTING_INPUTS = slice(transpose(inputs), 120, 150);
 
-        double[][] outputs = encode(observations,4,5);
+        double[][] outputs = encode(observations, 4, 5);
 
-        TRAINING_IDEALS = slice(outputs,0,120);
-        TESTING_IDEALS = slice(outputs,120,150);
+        TRAINING_IDEALS = slice(outputs, 0, 120);
+        TESTING_IDEALS = slice(outputs, 120, 150);
 
-        report("training",TRAINING_INPUTS,TRAINING_IDEALS);
+        report("training", TRAINING_INPUTS, TRAINING_IDEALS);
 
     }
 
@@ -187,27 +197,27 @@ public class RonzIrisK1n {
         /////////////// Normalize inputs
         // Pass 1: calculate normalize fields
 
-        IntStream.range(startCol,endCol).forEach(colno -> {
+        IntStream.range(startCol, endCol).forEach(colno -> {
             double[] column = observations[colno];
 
             double hi = StatUtils.max(column);
             double lo = StatUtils.min(column);
             NormalizedField normalizer = new NormalizedField(NormalizationAction.Normalize,
-                    null,hi,lo, NORMALIZED_HI, NORMALIZED_LO);
+                    null, hi, lo, NORMALIZED_HI, NORMALIZED_LO);
             normalizers.add(normalizer);
         });
 
         // Pass 2: Using the normalized field, normalize the inputs
         int numRows = observations[0].length;
-        int numCols = endCol-startCol;
+        int numCols = endCol - startCol;
 
         double[][] inputsNormalized = new double[numCols][];
 
-        IntStream.range(0,numCols).forEach(colno -> {
+        IntStream.range(0, numCols).forEach(colno -> {
             inputsNormalized[colno] = new double[numRows];
-            IntStream.range(0,numRows).forEach(rowno -> {
+            IntStream.range(0, numRows).forEach(rowno -> {
                 double datum = observations[colno][rowno];
-                NormalizedField normalizer =  normalizers.get(colno);
+                NormalizedField normalizer = normalizers.get(colno);
                 inputsNormalized[colno][rowno] = normalizer.normalize(datum);
             });
         });
@@ -216,12 +226,12 @@ public class RonzIrisK1n {
 
     static double[][] encode(double[][] observations, int startCol, int endCol) {
         int numRows = observations[0].length;
-        int numCols = endCol-startCol;
-        assert(numCols == 1);
+        int numCols = endCol - startCol;
+        assert (numCols == 1);
 
         // Need only one pass here since the category is already a set
         double[][] outputsEncoded = new double[numRows][];
-        IntStream.range(0,numRows).forEach(rowno -> {
+        IntStream.range(0, numRows).forEach(rowno -> {
             int cat = (int) observations[startCol][rowno];
             outputsEncoded[rowno] = eq.encode(cat);
         });
@@ -229,73 +239,74 @@ public class RonzIrisK1n {
     }
 
     static void report(String msg, double[][] inputs, double[][] outputs) {
-        System.out.println(msg+" inputs ---");
+        System.out.println(msg + " inputs ---");
 
         final int numRows = inputs.length;
         final int numCols = inputs[0].length;
 
-        IntStream.range(0,numCols).forEach(colno -> {
+        IntStream.range(0, numCols).forEach(colno -> {
             String name = CsvDicer.COL_SHORT_NAMES[colno];
             double actualHi = normalizers.get(colno).getActualHigh();
             double actualLo = normalizers.get(colno).getActualLow();
-            System.out.printf("%s: %5.2f - %5.2f\n",name,actualLo,actualHi);
+            System.out.printf("%s: %5.2f - %5.2f\n", name, actualLo, actualHi);
         });
 
-        System.out.printf("%3s ","#");
+        System.out.printf("%3s ", "#");
         IntStream.range(0, numCols).forEach(colno -> {
             String name = CsvDicer.COL_SHORT_NAMES[colno];
-            System.out.printf("%-12s | ",name);
+            System.out.printf("%-12s | ", name);
         });
         System.out.println("");
 
         IntStream.range(0, numRows).forEach(rowno -> {
-            System.out.printf("%3d ",rowno);
-            IntStream.range(0,numCols).forEach(colno -> {
+            System.out.printf("%3d ", rowno);
+            IntStream.range(0, numCols).forEach(colno -> {
                 NormalizedField normalizer = normalizers.get(colno);
                 double denorm = normalizer.deNormalize(inputs[rowno][colno]);
                 double norm = inputs[rowno][colno];
-                System.out.printf("%3.1f -> %5.2f | ",denorm,norm);
+                System.out.printf("%3.1f -> %5.2f | ", denorm, norm);
             });
             System.out.println("");
         });
 
         int numOutputRows = outputs.length;
         int numOutputCols = outputs[0].length;
-        System.out.println(msg+" outputs ---");
+        System.out.println(msg + " outputs ---");
 //        System.out.printf("%5s %5s   %5s   %s\n","Index","t1","t2","Decoding");
-        System.out.printf("%3s ","#");
-        IntStream.range(0,numOutputCols).forEach(colno -> {
-            System.out.printf("%4s%d   ","t",(colno+1));
+        System.out.printf("%3s ", "#");
+        IntStream.range(0, numOutputCols).forEach(colno -> {
+            System.out.printf("%4s%d   ", "t", (colno + 1));
         });
         System.out.println("  Decoding");
 
-        for(int rowno=0; rowno < numOutputRows; rowno++) {
+        for (int rowno = 0; rowno < numOutputRows; rowno++) {
             double[] encoding = outputs[rowno];
             int decoding = eq.decode(encoding);
             String species = CsvDicer.decompile(decoding);
 //            System.out.printf("%3d   %7.4f %7.4f %s\n",(rowno),encoding[0],encoding[1],species);
-            System.out.printf("%3d   ",(rowno));
-            IntStream.range(0,encoding.length).forEach(colno -> {
-                System.out.printf("%7.4f ",encoding[colno]);
+            System.out.printf("%3d   ", (rowno));
+            IntStream.range(0, encoding.length).forEach(colno -> {
+                System.out.printf("%7.4f ", encoding[colno]);
             });
-            System.out.printf("%d -> %s\n",decoding, species);
+            System.out.printf("%d -> %s\n", decoding, species);
         }
     }
 
     /**
      * Outputs the ideal encoded outputs.
+     *
      * @param outputs Encoded matrix
      */
     static void outputIdeals(double[][] outputs) {
         CsvDicer d = null;
         System.out.println("Iris encoded data outputs\n--------------------------------");
-        System.out.printf("%5s %5s   %5s   %s\n","Index","t1","t2","Decoding");
+        System.out.printf("%5s %5s   %5s   %s\n", "Index", "t1", "t2", "Decoding");
 
-        for(int rowIndex=0; rowIndex < outputs.length; rowIndex++) {
+        for (int rowIndex = 0; rowIndex < outputs.length; rowIndex++) {
             double[] encoding = outputs[rowIndex];
             int decoding = eq.decode(encoding);
             String species = CsvDicer.decompile(decoding);
-            System.out.printf("%3d   %7.4f %7.4f %s\n",(rowIndex),encoding[0],encoding[1],species);
+            System.out.printf("%3d   %7.4f %7.4f %s\n", (rowIndex), encoding[0], encoding[1], species);
         }
     }
 }

@@ -48,7 +48,7 @@ import java.util.stream.IntStream;
  * @author Ron.Coleman
  * @date 29.Oct.2019
  */
-public class RonzIris {
+public class RonzIrisMlp {
     public static boolean DEBUGGING = Boolean.parseBoolean(System.getProperty("debug","false"));
 
     final static double NORMALIZED_HI = 1;
