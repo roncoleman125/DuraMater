@@ -29,7 +29,9 @@ import org.encog.util.arrayutil.NormalizationAction;
 import org.encog.util.arrayutil.NormalizedField;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -43,6 +45,8 @@ import static duramater.mlp.iris.IrisMatrix.transpose;
  * @date 29.Oct.2019
  */
 public class RonzIrisK1n {
+    record Candidate(double[] pt, double dist, int no) {}
+
     public static boolean DEBUGGING = Boolean.parseBoolean(System.getProperty("debug","false"));
 
     final static double NORMALIZED_HI = 1;
@@ -51,7 +55,7 @@ public class RonzIrisK1n {
     /** Error tolerance */
     public final static double TOLERANCE = 0.01;
 
-    // Matrices will contain training & xs data
+    // Matrices will contain training & pt data
     static double TRAINING_INPUTS[][] = null;
     static double TRAINING_IDEALS[][] = null;
 
@@ -76,12 +80,12 @@ public class RonzIrisK1n {
         // Receives the network output -- the equilateral encoding
         double[] output = new double[2];
 
-        // Test each row in the xs data
+        // Test each row in the pt data
         for(int k = 0; k < TESTING_INPUTS.length; k++) {
             // Get the input
             double[] target = TESTING_INPUTS[k];
 
-            Prediction nearest = getNearest(target);
+            Candidate nearest = getNearest(target);
 
             // Get the output and decode it to a subtype index.
             int predictedno = eq.decode(TRAINING_IDEALS[nearest.no()]);
@@ -115,23 +119,34 @@ public class RonzIrisK1n {
         Encog.getInstance().shutdown();
     }
 
-    record Nearest(int no,double dist) {}
-    record Prediction(double[] xs, double dist, int no) {}
-
-
-    static Prediction getNearest(double[] target) {
-        List<Prediction> recs =
+    static Candidate getNearest(double[] target) {
+        List<Candidate> candidates =
                 IntStream.range(0,TRAINING_INPUTS.length)
-                        .mapToObj(no -> new Prediction(TRAINING_INPUTS[no],getDist(TRAINING_INPUTS[no],target),no))
+                        .mapToObj(no -> new Candidate(TRAINING_INPUTS[no],getDist(TRAINING_INPUTS[no],target),no))
                         .sorted((obj1, obj2) -> {
                             if(obj1.dist() > obj2.dist())
                                 return 1;
                             else
                                 return -1;
                         }).collect(Collectors.toList());
-        Prediction nearest = recs.get(0);
+//        Candidate nearest = candidates.get(0);
+//        return nearest;
+        Map<Integer,Integer> votes = new HashMap<>();
+        IntStream.range(0,4).forEach(idx -> {
+            int candidate = eq.decode(TRAINING_IDEALS[candidates.get(idx).no()]);
+            int freq = votes.getOrDefault(candidate,0);
+            votes.put(candidate,freq+1);
+        });
 
-        return nearest;
+        int winner = votes.entrySet().stream().sorted((e1,e2) -> {
+            if(e1.getValue() > e2.getValue())
+                return 1;
+            else
+                return -1;
+        }).collect(Collectors.toList()).get(0).getKey();
+
+        Candidate popular = candidates.get(winner);
+        return popular;
     }
 
     public static double getDist(double[] p1, double[] p2) {
@@ -141,7 +156,7 @@ public class RonzIrisK1n {
     }
 
     /**
-     * Initializes the training and xs arrays.
+     * Initializes the training and pt arrays.
      */
     static void init() {
         CsvDicer csvDicer = new CsvDicer("data/iris.csv");

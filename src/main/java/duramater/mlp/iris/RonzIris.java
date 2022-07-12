@@ -61,7 +61,7 @@ public class RonzIris {
 //    public static final int NUM_TRAINING_ROWS = 120;
 //    public static final int NUM_TESTING_ROWS = 30;
 
-    // Matrices will contain training & xs data
+    // Matrices will contain training & pt data
     static double TRAINING_INPUTS[][] = null;
     static double TRAINING_IDEALS[][] = null;
 
@@ -133,7 +133,7 @@ public class RonzIris {
         Encog.getInstance().shutdown();
 
         // Test the neural network
-        System.out.println("Network xs results:");
+        System.out.println("Network pt results:");
 
         int missed = 0;
 
@@ -142,7 +142,7 @@ public class RonzIris {
         // Receives the network output -- the equilateral encoding
         double[] output = new double[2];
 
-        // Test each row in the xs data
+        // Test each row in the pt data
         for(int k = 0; k < TESTING_INPUTS.length; k++) {
             // Get the input
             double[] input = TESTING_INPUTS[k];
@@ -182,7 +182,7 @@ public class RonzIris {
     }
 
     /**
-     * Initializes the training and xs arrays.
+     * Initializes the training and pt arrays.
      */
     static void init() {
         CsvDicer csvDicer = new CsvDicer("data/iris.csv");
