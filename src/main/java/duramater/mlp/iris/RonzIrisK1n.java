@@ -85,7 +85,7 @@ public class RonzIrisK1n {
             // Get the input
             double[] target = TESTING_INPUTS[k];
 
-            Candidate nearest = getNearest(target);
+            Candidate nearest = getNearest(target,false);
 
             // Get the output and decode it to a subtype index.
             int predictedno = eq.decode(TRAINING_IDEALS[nearest.no()]);
@@ -102,11 +102,12 @@ public class RonzIrisK1n {
             System.out.printf("%2d %11s %11s ", (k+1), ideal, predicted);
 
             if(!predicted.equals(ideal)) {
-                System.out.print("MISSED!");
+                System.out.println("MISSED!");
+                getNearest(target,true);
                 missed++;
             }
-
-            System.out.print("\n");
+            else
+                System.out.print("\n");
         }
 
         // Compute the performance
@@ -119,7 +120,7 @@ public class RonzIrisK1n {
         Encog.getInstance().shutdown();
     }
 
-    static Candidate getNearest(double[] target) {
+    static Candidate getNearest(double[] target,boolean report) {
         List<Candidate> candidates =
                 IntStream.range(0,TRAINING_INPUTS.length)
                         .mapToObj(no -> new Candidate(TRAINING_INPUTS[no],getDist(TRAINING_INPUTS[no],target),no))
@@ -132,7 +133,7 @@ public class RonzIrisK1n {
 //        Candidate nearest = candidates.get(0);
 //        return nearest;
         Map<Integer,Integer> votes = new HashMap<>();
-        IntStream.range(0,4).forEach(idx -> {
+        IntStream.range(0,5).forEach(idx -> {
             int candidate = eq.decode(TRAINING_IDEALS[candidates.get(idx).no()]);
             int freq = votes.getOrDefault(candidate,0);
             votes.put(candidate,freq+1);
@@ -144,6 +145,12 @@ public class RonzIrisK1n {
             else
                 return -1;
         }).collect(Collectors.toList()).get(0).getKey();
+
+        if(report) {
+            votes.entrySet().stream().forEach(entry -> {
+                System.out.printf("candidate: %d votes: %d\n",entry.getKey(),entry.getValue());
+            });
+        }
 
         Candidate popular = candidates.get(winner);
         return popular;
