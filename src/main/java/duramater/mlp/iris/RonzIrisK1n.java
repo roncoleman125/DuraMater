@@ -22,25 +22,19 @@
  */
 package duramater.mlp.iris;
 
-import duramater.util.EncogHelper;
-import static duramater.mlp.iris.IrisMatrix.slice;
-import static duramater.mlp.iris.IrisMatrix.transpose;
-
 import org.apache.commons.math3.stat.StatUtils;
 import org.encog.Encog;
-import org.encog.engine.network.activation.ActivationTANH;
 import org.encog.mathutil.Equilateral;
-import org.encog.ml.data.MLDataSet;
-import org.encog.ml.data.basic.BasicMLDataSet;
-import org.encog.neural.networks.BasicNetwork;
-import org.encog.neural.networks.layers.BasicLayer;
-import org.encog.neural.networks.training.propagation.Propagation;
-import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
 import org.encog.util.arrayutil.NormalizationAction;
 import org.encog.util.arrayutil.NormalizedField;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static duramater.mlp.iris.IrisMatrix.slice;
+import static duramater.mlp.iris.IrisMatrix.transpose;
 
 
 /**
@@ -48,7 +42,7 @@ import java.util.stream.IntStream;
  * @author Ron.Coleman
  * @date 29.Oct.2019
  */
-public class RonzIris {
+public class RonzIrisK1n {
     public static boolean DEBUGGING = Boolean.parseBoolean(System.getProperty("debug","false"));
 
     final static double NORMALIZED_HI = 1;
@@ -56,10 +50,6 @@ public class RonzIris {
 
     /** Error tolerance */
     public final static double TOLERANCE = 0.01;
-//    public final static double LEARNING_RATE = 0.50;
-//    public final static double LEARNING_MOMENTUM = 0.50;
-//    public static final int NUM_TRAINING_ROWS = 120;
-//    public static final int NUM_TESTING_ROWS = 30;
 
     // Matrices will contain training & xs data
     static double TRAINING_INPUTS[][] = null;
@@ -78,62 +68,6 @@ public class RonzIris {
      */
     public static void main(final String args[]) {
         init();
-//        System.exit(-1);
-
-        // Build the network.
-        BasicNetwork network = new BasicNetwork();
-
-        // Input layer
-        network.addLayer(new BasicLayer(null, true, 4));
-
-        // Hidden layer
-        network.addLayer(new BasicLayer(new ActivationTANH(), true, 4));
-
-        // Output layer
-        network.addLayer(new BasicLayer(new ActivationTANH(), false, 2));
-
-        // No more layers to add
-        network.getStructure().finalizeStructure();
-
-        // Randomize the weights
-        network.reset();
-        System.out.println("Network description: before training");
-        EncogHelper.describe(network);
-
-        MLDataSet trainingSet = new BasicMLDataSet(TRAINING_INPUTS, TRAINING_IDEALS);
-
-        // Use a training object for the learning algorithm, in this case, an improved
-        // backpropagation. For details on what this does see the javadoc.
-//        final Propagation train = new Backpropagation(network, trainingSet,LEARNING_RATE,LEARNING_MOMENTUM);
-        final Propagation train = new ResilientPropagation(network, trainingSet);
-
-        // Set learning batch size: 0 = batch, 1 = online, n = batch size
-        // See org.encog.neural.networks.training.BatchSize
-         train.setBatchSize(0);
-
-        int epoch = 0;
-
-        EncogHelper.log(epoch, train,false);
-        do {
-            train.iteration();
-
-            epoch++;
-
-            EncogHelper.log(epoch, train,false);
-
-        } while (train.getError() > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
-
-        train.finishTraining();
-        EncogHelper.log(epoch, train,true);
-        EncogHelper.report(trainingSet, network);
-
-        System.out.println("Network description: after training");
-        EncogHelper.describe(network);
-
-        Encog.getInstance().shutdown();
-
-        // Test the neural network
-        System.out.println("Network xs results:");
 
         int missed = 0;
 
@@ -145,11 +79,12 @@ public class RonzIris {
         // Test each row in the xs data
         for(int k = 0; k < TESTING_INPUTS.length; k++) {
             // Get the input
-            double[] input = TESTING_INPUTS[k];
+            double[] target = TESTING_INPUTS[k];
+
+            Prediction nearest = getNearest(target);
 
             // Get the output and decode it to a subtype index.
-            network.compute(input, output);
-            int actualno = eq.decode(output);
+            int predictedno = eq.decode(TRAINING_IDEALS[nearest.no()]);
 
             // Get the ideal and decode it to a subtype index.
             double[] ideals = TESTING_IDEALS[k];
@@ -157,13 +92,12 @@ public class RonzIris {
 
             // Convert them both to string names.
             String ideal = CsvDicer.cat2Species.get(idealno);
-            String actual = CsvDicer.cat2Species.get(actualno);
-
+            String predicted = CsvDicer.cat2Species.get(predictedno);
 
             // If the string names aren't equal, record a miss.
-            System.out.printf("%2d %11s %11s ", (k+1), ideal, actual);
+            System.out.printf("%2d %11s %11s ", (k+1), ideal, predicted);
 
-            if(!ideal.equals(actual)) {
+            if(!predicted.equals(ideal)) {
                 System.out.print("MISSED!");
                 missed++;
             }
@@ -179,6 +113,31 @@ public class RonzIris {
         System.out.printf("success rate = %d/%d (%4.1f%%)", (int) (tried-missed), (int) tried, success);
 
         Encog.getInstance().shutdown();
+    }
+
+    record Nearest(int no,double dist) {}
+    record Prediction(double[] xs, double dist, int no) {}
+
+
+    static Prediction getNearest(double[] target) {
+        List<Prediction> recs =
+                IntStream.range(0,TRAINING_INPUTS.length)
+                        .mapToObj(no -> new Prediction(TRAINING_INPUTS[no],getDist(TRAINING_INPUTS[no],target),no))
+                        .sorted((obj1, obj2) -> {
+                            if(obj1.dist() > obj2.dist())
+                                return 1;
+                            else
+                                return -1;
+                        }).collect(Collectors.toList());
+        Prediction nearest = recs.get(0);
+
+        return nearest;
+    }
+
+    public static double getDist(double[] p1, double[] p2) {
+        double l2 = IntStream.range(0,p1.length)
+                             .mapToDouble(idx -> (p1[idx]-p2[idx])*(p1[idx]-p2[idx])).sum();
+        return l2;
     }
 
     /**

@@ -45,21 +45,6 @@ public class MnistTrainNetwork {
     /** Error tolerance: 1% */
     public final static double TOLERANCE = 0.01;
 
-    /** Inputs necessary for XOR. */
-    public static double XOR_INPUTS[][] = {
-            {0.0, 0.0},
-            {0.0, 1.0},
-            {1.0, 0.0},
-            {1.0, 1.0}
-    };
-
-    /** Ideals necessary for XOR.*/
-    public static double XOR_IDEALS[][] = {
-            {0.0},
-            {1.0},
-            {1.0},
-            {0.0}};
-
     /**
      * The main method.
      * @param args No arguments are used.
