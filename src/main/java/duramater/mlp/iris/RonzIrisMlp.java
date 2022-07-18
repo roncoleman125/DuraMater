@@ -183,13 +183,14 @@ public class RonzIrisMlp {
         double[][] observations = IrisHelper.load("data/iris.csv");
 
         IMop mop = new Mop();
-        double[][] inputs_ = normalize(mop.dice(observations,0,4));
+        double[][] observations_ = mop.dice(observations,0,4);
+        double[][] inputs = normalize(observations_);
 
-        double[][] inputs = mop.transpose(inputs_);
         TRAINING_INPUTS = mop.slice(inputs,0,120);
         TESTING_INPUTS = mop.slice(inputs,120,150);
 
-        double[][] outputs = encode(mop.dice(observations,4,5));
+        observations_ = mop.dice(observations,4,5);
+        double[][] outputs = encode(observations_);
 
         TRAINING_IDEALS = mop.slice(outputs,0,120);
         TESTING_IDEALS = mop.slice(outputs,120,150);
@@ -197,35 +198,34 @@ public class RonzIrisMlp {
         report("training",TRAINING_INPUTS,TRAINING_IDEALS);
     }
 
-    static double[][] normalize(double[][] observations) {
-        /////////////// Normalize inputs
-        // Pass 1: calculate normalize fields
-
-        IntStream.range(0,observations.length).forEach(colno -> {
-            double[] column = observations[colno];
-
+    static double[][] normalize(double[][] src) {
+        int nRows = src.length;
+        int nCols = src[0].length;
+        IntStream.range(0,nCols).forEach(colno -> {
+            double[] column = new double[nRows];
+            IntStream.range(0,nRows).forEach(rowno -> {
+                column[rowno] = src[rowno][colno];
+            });
             double hi = StatUtils.max(column);
             double lo = StatUtils.min(column);
+
             NormalizedField normalizer = new NormalizedField(NormalizationAction.Normalize,
                     null,hi,lo, NORMALIZED_HI, NORMALIZED_LO);
             normalizers.add(normalizer);
         });
 
-        // Pass 2: Using the normalized field, normalize the inputs
-        int numRows = observations[0].length;
-        int numCols = observations.length;
-
-        double[][] inputsNormalized = new double[numCols][];
-
-        IntStream.range(0,numCols).forEach(colno -> {
-            inputsNormalized[colno] = new double[numRows];
-            IntStream.range(0,numRows).forEach(rowno -> {
-                double datum = observations[colno][rowno];
-                NormalizedField normalizer =  normalizers.get(colno);
-                inputsNormalized[colno][rowno] = normalizer.normalize(datum);
+        double[][] dest = new double[nRows][nCols];
+        IntStream.range(0,nRows).forEach(rowno -> {
+            IntStream.range(0,nCols).forEach(colno -> {
+                double datum = src[rowno][colno];
+                NormalizedField normalizer = normalizers.get(colno);
+                double normal = normalizer.normalize(datum);
+                dest[rowno][colno] = normal;
             });
         });
-        return inputsNormalized;
+
+        return dest;
+
     }
 
     /**
@@ -234,14 +234,14 @@ public class RonzIrisMlp {
      * @return
      */
     static double[][] encode(double[][] src) {
-        int numRows = src[0].length;
-        int numCols = src.length;
+        int numRows = src.length;
+        int numCols = src[0].length;
         assert(numCols == 1);
 
         // Need only one pass here since the category is already a set
         double[][] dest = new double[numRows][];
         IntStream.range(0,numRows).forEach(rowno -> {
-            int cat = (int) src[0][rowno];
+            int cat = (int) src[rowno][0];
             dest[rowno] = eq.encode(cat);
         });
         return dest;

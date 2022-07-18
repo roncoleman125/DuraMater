@@ -48,11 +48,11 @@ public class Mop implements IMop {
 //        double[][] dest = transpose(slice(transpose(src),start,end));
 
         int nCols = endCol-startCol;
-        int nRows = src[0].length;
-        double[][] dest = new double[nCols][nRows];
-        IntStream.range(startCol,endCol).forEach(colno -> {
-            IntStream.range(0,nRows).forEach(rowno -> {
-                dest[colno-startCol][rowno] = src[colno][rowno];
+        int nRows = src.length;
+        double[][] dest = new double[nRows][nCols];
+        IntStream.range(0,nRows).forEach(rowno -> {
+            IntStream.range(startCol,endCol).forEach(colno -> {
+                dest[rowno][colno-startCol] = src[rowno][colno];
             });
         });
 
