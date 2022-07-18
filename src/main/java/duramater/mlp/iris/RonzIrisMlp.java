@@ -22,10 +22,10 @@
  */
 package duramater.mlp.iris;
 
+import duramater.matrix.IMop;
+import duramater.matrix.Mop;
+import duramater.util.IrisHelper;
 import duramater.util.EncogHelper;
-import static duramater.mlp.iris.IrisMatrix.slice;
-import static duramater.mlp.iris.IrisMatrix.transpose;
-
 import org.apache.commons.math3.stat.StatUtils;
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationTANH;
@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-
 /**
  * This program was evolved from XorHelloWorld to train and test an MLP on iris data.
  * @author Ron.Coleman
@@ -56,10 +55,6 @@ public class RonzIrisMlp {
 
     /** Error tolerance */
     public final static double TOLERANCE = 0.01;
-//    public final static double LEARNING_RATE = 0.50;
-//    public final static double LEARNING_MOMENTUM = 0.50;
-//    public static final int NUM_TRAINING_ROWS = 120;
-//    public static final int NUM_TESTING_ROWS = 30;
 
     // Matrices will contain training & pt data
     static double TRAINING_INPUTS[][] = null;
@@ -68,9 +63,9 @@ public class RonzIrisMlp {
     static double TESTING_INPUTS[][] = null;
     static double TESTING_IDEALS[][] = null;
 
-    static CsvDicer csvDicer = null;
+    static IrisHelper csvDicer = null;
     static List<NormalizedField> normalizers = new ArrayList<>();
-    static final Equilateral eq = new Equilateral(CsvDicer.species2Cat.size(), NORMALIZED_HI, NORMALIZED_LO);
+    static final Equilateral eq = new Equilateral(IrisHelper.species2Cat.size(), NORMALIZED_HI, NORMALIZED_LO);
 
     /**
      * The main method.
@@ -156,8 +151,8 @@ public class RonzIrisMlp {
             int idealno = eq.decode(ideals);
 
             // Convert them both to string names.
-            String ideal = CsvDicer.cat2Species.get(idealno);
-            String actual = CsvDicer.cat2Species.get(actualno);
+            String ideal = IrisHelper.cat2Species.get(idealno);
+            String actual = IrisHelper.cat2Species.get(actualno);
 
 
             // If the string names aren't equal, record a miss.
@@ -185,28 +180,28 @@ public class RonzIrisMlp {
      * Initializes the training and pt arrays.
      */
     static void init() {
-        CsvDicer csvDicer = new CsvDicer("data/iris.csv");
-        double[][] observations = csvDicer.dice();
+        double[][] observations = IrisHelper.load("data/iris.csv");
 
-        double[][] inputs = normalize(observations,0,4);
+        IMop mop = new Mop();
+        double[][] inputs_ = normalize(mop.dice(observations,0,4));
 
-        TRAINING_INPUTS = slice(transpose(inputs),0,120);
-        TESTING_INPUTS = slice(transpose(inputs),120,150);
+        double[][] inputs = mop.transpose(inputs_);
+        TRAINING_INPUTS = mop.slice(inputs,0,120);
+        TESTING_INPUTS = mop.slice(inputs,120,150);
 
-        double[][] outputs = encode(observations,4,5);
+        double[][] outputs = encode(mop.dice(observations,4,5));
 
-        TRAINING_IDEALS = slice(outputs,0,120);
-        TESTING_IDEALS = slice(outputs,120,150);
+        TRAINING_IDEALS = mop.slice(outputs,0,120);
+        TESTING_IDEALS = mop.slice(outputs,120,150);
 
         report("training",TRAINING_INPUTS,TRAINING_IDEALS);
-
     }
 
-    static double[][] normalize(double[][] observations, int startCol, int endCol) {
+    static double[][] normalize(double[][] observations) {
         /////////////// Normalize inputs
         // Pass 1: calculate normalize fields
 
-        IntStream.range(startCol,endCol).forEach(colno -> {
+        IntStream.range(0,observations.length).forEach(colno -> {
             double[] column = observations[colno];
 
             double hi = StatUtils.max(column);
@@ -218,7 +213,7 @@ public class RonzIrisMlp {
 
         // Pass 2: Using the normalized field, normalize the inputs
         int numRows = observations[0].length;
-        int numCols = endCol-startCol;
+        int numCols = observations.length;
 
         double[][] inputsNormalized = new double[numCols][];
 
@@ -233,18 +228,23 @@ public class RonzIrisMlp {
         return inputsNormalized;
     }
 
-    static double[][] encode(double[][] observations, int startCol, int endCol) {
-        int numRows = observations[0].length;
-        int numCols = endCol-startCol;
+    /**
+     * Encodes the src -- assumes column-major order.
+     * @param src
+     * @return
+     */
+    static double[][] encode(double[][] src) {
+        int numRows = src[0].length;
+        int numCols = src.length;
         assert(numCols == 1);
 
         // Need only one pass here since the category is already a set
-        double[][] outputsEncoded = new double[numRows][];
+        double[][] dest = new double[numRows][];
         IntStream.range(0,numRows).forEach(rowno -> {
-            int cat = (int) observations[startCol][rowno];
-            outputsEncoded[rowno] = eq.encode(cat);
+            int cat = (int) src[0][rowno];
+            dest[rowno] = eq.encode(cat);
         });
-        return outputsEncoded;
+        return dest;
     }
 
     static void report(String msg, double[][] inputs, double[][] outputs) {
@@ -254,7 +254,7 @@ public class RonzIrisMlp {
         final int numCols = inputs[0].length;
 
         IntStream.range(0,numCols).forEach(colno -> {
-            String name = CsvDicer.COL_SHORT_NAMES[colno];
+            String name = IrisHelper.COL_SHORT_NAMES[colno];
             double actualHi = normalizers.get(colno).getActualHigh();
             double actualLo = normalizers.get(colno).getActualLow();
             System.out.printf("%s: %5.2f - %5.2f\n",name,actualLo,actualHi);
@@ -262,7 +262,7 @@ public class RonzIrisMlp {
 
         System.out.printf("%3s ","#");
         IntStream.range(0, numCols).forEach(colno -> {
-            String name = CsvDicer.COL_SHORT_NAMES[colno];
+            String name = IrisHelper.COL_SHORT_NAMES[colno];
             System.out.printf("%-12s | ",name);
         });
         System.out.println("");
@@ -291,7 +291,7 @@ public class RonzIrisMlp {
         for(int rowno=0; rowno < numOutputRows; rowno++) {
             double[] encoding = outputs[rowno];
             int decoding = eq.decode(encoding);
-            String species = CsvDicer.decompile(decoding);
+            String species = IrisHelper.decompile(decoding);
 //            System.out.printf("%3d   %7.4f %7.4f %s\n",(rowno),encoding[0],encoding[1],species);
             System.out.printf("%3d   ",(rowno));
             IntStream.range(0,encoding.length).forEach(colno -> {
@@ -306,14 +306,14 @@ public class RonzIrisMlp {
      * @param outputs Encoded matrix
      */
     static void outputIdeals(double[][] outputs) {
-        CsvDicer d = null;
+        IrisHelper d = null;
         System.out.println("Iris encoded data outputs\n--------------------------------");
         System.out.printf("%5s %5s   %5s   %s\n","Index","t1","t2","Decoding");
 
         for(int rowIndex=0; rowIndex < outputs.length; rowIndex++) {
             double[] encoding = outputs[rowIndex];
             int decoding = eq.decode(encoding);
-            String species = CsvDicer.decompile(decoding);
+            String species = IrisHelper.decompile(decoding);
             System.out.printf("%3d   %7.4f %7.4f %s\n",(rowIndex),encoding[0],encoding[1],species);
         }
     }

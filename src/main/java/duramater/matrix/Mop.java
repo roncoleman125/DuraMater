@@ -1,11 +1,11 @@
-package duramater.mlp.iris;
+package duramater.matrix;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public class IrisMatrix {
+public class Mop implements IMop {
 
-    public static double[][] slice(double[][] src,int startRow, int endRow) {
+    public double[][] slice(double[][] src,int startRow, int endRow) {
         // Method 1:
         double[][] dest = Arrays.copyOfRange(src,startRow,endRow);
 
@@ -28,14 +28,14 @@ public class IrisMatrix {
         return dest;
     }
 
-    public static double[][] transpose(double[][] src) {
-        int numRows = src[0].length;
-        int numCols = src.length;
+    public double[][] transpose(double[][] src) {
+        int nRows = src[0].length;
+        int nCols = src.length;
 
-        double[][] dest = new double[numRows][numCols];
+        double[][] dest = new double[nRows][nCols];
 
-        IntStream.range(0,numRows).forEach(rowno -> {
-            IntStream.range(0,numCols).forEach(colno -> {
+        IntStream.range(0,nRows).forEach(rowno -> {
+            IntStream.range(0,nCols).forEach(colno -> {
                 dest[rowno][colno] = src[colno][rowno];
             });
         });
@@ -43,7 +43,23 @@ public class IrisMatrix {
         return dest;
     }
 
-    public static void print(String caption,double[][] src) {
+    @Override
+    public double[][] dice(double[][] src, int startCol, int endCol) {
+//        double[][] dest = transpose(slice(transpose(src),start,end));
+
+        int nCols = endCol-startCol;
+        int nRows = src[0].length;
+        double[][] dest = new double[nCols][nRows];
+        IntStream.range(startCol,endCol).forEach(colno -> {
+            IntStream.range(0,nRows).forEach(rowno -> {
+                dest[colno-startCol][rowno] = src[colno][rowno];
+            });
+        });
+
+        return dest;
+    }
+
+    public void print(String caption,double[][] src) {
         System.out.printf("--- %s: %dx%d\n",caption,src.length,src[0].length);
         Arrays.stream(src).forEach(row -> {
             Arrays.stream(row).forEach(cell -> System.out.printf("%2.0f ",cell));

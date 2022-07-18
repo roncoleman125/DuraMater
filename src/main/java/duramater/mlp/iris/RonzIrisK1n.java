@@ -22,6 +22,7 @@
  */
 package duramater.mlp.iris;
 
+import duramater.util.IrisHelper;
 import org.apache.commons.math3.stat.StatUtils;
 import org.encog.Encog;
 import org.encog.mathutil.Equilateral;
@@ -34,9 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static duramater.mlp.iris.IrisMatrix.slice;
-import static duramater.mlp.iris.IrisMatrix.transpose;
 
 
 /**
@@ -69,9 +67,9 @@ public class RonzIrisK1n {
     static double TESTING_INPUTS[][] = null;
     static double TESTING_IDEALS[][] = null;
 
-    static CsvDicer csvDicer = null;
+    static IrisHelper csvDicer = null;
     static List<NormalizedField> normalizers = new ArrayList<>();
-    static final Equilateral eq = new Equilateral(CsvDicer.species2Cat.size(), NORMALIZED_HI, NORMALIZED_LO);
+    static final Equilateral eq = new Equilateral(IrisHelper.species2Cat.size(), NORMALIZED_HI, NORMALIZED_LO);
 
     /**
      * The main method.
@@ -103,8 +101,8 @@ public class RonzIrisK1n {
             int idealno = eq.decode(ideals);
 
             // Convert them both to string names.
-            String ideal = CsvDicer.cat2Species.get(idealno);
-            String predicted = CsvDicer.cat2Species.get(predictedno);
+            String ideal = IrisHelper.cat2Species.get(idealno);
+            String predicted = IrisHelper.cat2Species.get(predictedno);
 
             // If the string names aren't equal, record a miss.
             System.out.printf("%2d %11s %11s ", (k + 1), ideal, predicted);
@@ -176,20 +174,20 @@ public class RonzIrisK1n {
      * Initializes the training and pt arrays.
      */
     static void init() {
-        CsvDicer csvDicer = new CsvDicer("data/iris.csv");
-        double[][] observations = csvDicer.dice();
-
-        double[][] inputs = normalize(observations, 0, 4);
-
-        TRAINING_INPUTS = slice(transpose(inputs), 0, 120);
-        TESTING_INPUTS = slice(transpose(inputs), 120, 150);
-
-        double[][] outputs = encode(observations, 4, 5);
-
-        TRAINING_IDEALS = slice(outputs, 0, 120);
-        TESTING_IDEALS = slice(outputs, 120, 150);
-
-        report("training", TRAINING_INPUTS, TRAINING_IDEALS);
+//        CsvLoader csvDicer = new CsvLoader("data/iris.csv");
+//        double[][] observations = csvDicer.load();
+//
+//        double[][] inputs = normalize(observations, 0, 4);
+//
+//        TRAINING_INPUTS = slice(transpose(inputs), 0, 120);
+//        TESTING_INPUTS = slice(transpose(inputs), 120, 150);
+//
+//        double[][] outputs = encode(observations, 4, 5);
+//
+//        TRAINING_IDEALS = slice(outputs, 0, 120);
+//        TESTING_IDEALS = slice(outputs, 120, 150);
+//
+//        report("training", TRAINING_INPUTS, TRAINING_IDEALS);
 
     }
 
@@ -245,7 +243,7 @@ public class RonzIrisK1n {
         final int numCols = inputs[0].length;
 
         IntStream.range(0, numCols).forEach(colno -> {
-            String name = CsvDicer.COL_SHORT_NAMES[colno];
+            String name = IrisHelper.COL_SHORT_NAMES[colno];
             double actualHi = normalizers.get(colno).getActualHigh();
             double actualLo = normalizers.get(colno).getActualLow();
             System.out.printf("%s: %5.2f - %5.2f\n", name, actualLo, actualHi);
@@ -253,7 +251,7 @@ public class RonzIrisK1n {
 
         System.out.printf("%3s ", "#");
         IntStream.range(0, numCols).forEach(colno -> {
-            String name = CsvDicer.COL_SHORT_NAMES[colno];
+            String name = IrisHelper.COL_SHORT_NAMES[colno];
             System.out.printf("%-12s | ", name);
         });
         System.out.println("");
@@ -282,7 +280,7 @@ public class RonzIrisK1n {
         for (int rowno = 0; rowno < numOutputRows; rowno++) {
             double[] encoding = outputs[rowno];
             int decoding = eq.decode(encoding);
-            String species = CsvDicer.decompile(decoding);
+            String species = IrisHelper.decompile(decoding);
 //            System.out.printf("%3d   %7.4f %7.4f %s\n",(rowno),encoding[0],encoding[1],species);
             System.out.printf("%3d   ", (rowno));
             IntStream.range(0, encoding.length).forEach(colno -> {
@@ -298,14 +296,14 @@ public class RonzIrisK1n {
      * @param outputs Encoded matrix
      */
     static void outputIdeals(double[][] outputs) {
-        CsvDicer d = null;
+        IrisHelper d = null;
         System.out.println("Iris encoded data outputs\n--------------------------------");
         System.out.printf("%5s %5s   %5s   %s\n", "Index", "t1", "t2", "Decoding");
 
         for (int rowIndex = 0; rowIndex < outputs.length; rowIndex++) {
             double[] encoding = outputs[rowIndex];
             int decoding = eq.decode(encoding);
-            String species = CsvDicer.decompile(decoding);
+            String species = IrisHelper.decompile(decoding);
             System.out.printf("%3d   %7.4f %7.4f %s\n", (rowIndex), encoding[0], encoding[1], species);
         }
     }

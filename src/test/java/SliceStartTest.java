@@ -9,13 +9,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import duramater.mlp.iris.IrisMatrix;
+import duramater.matrix.IMop;
+import duramater.matrix.Mop;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import java.util.stream.IntStream;
-import static duramater.mlp.iris.IrisMatrix.slice;
-import static duramater.mlp.iris.IrisMatrix.transpose;
 
 /**
  * Tests slice from start of matrix.
@@ -39,12 +38,14 @@ public class SliceStartTest {
             { 4,  5, 6}
     };
 
+    final IMop mop = new Mop();
+
     /**
      * Tests that slice matches expectations.
      */
     @Test
     public void test() {
-        final double[][] slice = slice(TEST_MATRIX,0,2);
+        final double[][] slice = mop.slice(TEST_MATRIX,0,2);
 
         int numRows = slice.length;
         assert(numRows == EXPECTED_MATRIX.length);
@@ -58,7 +59,7 @@ public class SliceStartTest {
             });
         });
 
-        IrisMatrix.print(this.getClass().getName()+" slice",slice);
+        mop.print(this.getClass().getName()+" slice",slice);
     }
 
     /**
@@ -66,11 +67,11 @@ public class SliceStartTest {
      */
     @Test
     public void testCommutability() {
-        double[][] sliceTranspose = transpose(slice(TEST_MATRIX,0,2));
-        IrisMatrix.print(this.getClass().getName()+" slice, transpose",sliceTranspose);
+        double[][] sliceTranspose = mop.transpose(mop.slice(TEST_MATRIX,0,2));
+        mop.print(this.getClass().getName()+" slice, transpose",sliceTranspose);
 
-        double[][] transposeSlice = slice(transpose(TEST_MATRIX),0,2);
-        IrisMatrix.print(this.getClass().getName()+" slice, transpose",transposeSlice);
+        double[][] transposeSlice = mop.slice(mop.transpose(TEST_MATRIX),0,2);
+        mop.print(this.getClass().getName()+" slice, transpose",transposeSlice);
         assert(sliceTranspose.length != transposeSlice.length);
     }
 }

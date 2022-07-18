@@ -1,10 +1,12 @@
-package duramater.mlp.iris;
+package duramater;
 
 import de.unknownreality.dataframe.DataFrame;
 import de.unknownreality.dataframe.csv.CSVReader;
 import de.unknownreality.dataframe.csv.CSVReaderBuilder;
 import de.unknownreality.dataframe.group.aggr.Aggregate;
 import de.unknownreality.dataframe.io.FileFormat;
+import duramater.util.IrisHelper;
+
 import java.io.File;
 import java.net.URL;
 
@@ -36,7 +38,7 @@ public class Os {
 
         dataFrame.shuffle();
 
-        DataFrame df = dataFrame.getStringColumn("Species").transform(new CsvDicer.Species2CatsTransformer("Species"));
+        DataFrame df = dataFrame.getStringColumn("Species").transform(new IrisHelper.Species2CatsTransformer("Species"));
         dataFrame.replaceColumn("Species",df.getColumn("Species"));
         System.out.println(dataFrame.size());
 
