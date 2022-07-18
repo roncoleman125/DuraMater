@@ -199,13 +199,15 @@ public class RonzIrisMlp {
     }
 
     static double[][] normalize(double[][] src) {
+        IMop mop = new Mop();
         int nRows = src.length;
         int nCols = src[0].length;
         IntStream.range(0,nCols).forEach(colno -> {
-            double[] column = new double[nRows];
-            IntStream.range(0,nRows).forEach(rowno -> {
-                column[rowno] = src[rowno][colno];
-            });
+            double[] column = mop.transpose(mop.dice(src,colno,colno+1))[0];
+//            double[] column = new double[nRows];
+//            IntStream.range(0,nRows).forEach(rowno -> {
+//                column[rowno] = src[rowno][colno];
+//            });
             double hi = StatUtils.max(column);
             double lo = StatUtils.min(column);
 
