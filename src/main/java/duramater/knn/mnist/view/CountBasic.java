@@ -61,8 +61,8 @@ public class CountBasic extends JFrame implements IObserver {
     }
 
     public static void load(IObserver observer) throws Exception {
-        candidateMatrices = new MnistDataReader().readData("observations/train-images.idx3-ubyte", "observations/train-labels.idx1-ubyte", observer);
-        targetMatrices = new MnistDataReader().readData("observations/t10k-images.idx3-ubyte", "observations/t10k-labels.idx1-ubyte", observer);
+        candidateMatrices = new MnistDataReader().readData("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte", observer);
+        targetMatrices = new MnistDataReader().readData("data/t10k-images.idx3-ubyte", "data/t10k-labels.idx1-ubyte", observer);
     }
 
     public static void main(String[] args) throws IOException {
