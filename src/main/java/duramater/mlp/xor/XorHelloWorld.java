@@ -9,7 +9,7 @@ import org.encog.ml.train.BasicTraining;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
-
+import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
 /**
  * XOR: This example is essentially the "Hello World" of neural network
  * programming. This example shows how to construct an Encog neural network to
@@ -83,7 +83,8 @@ public class XorHelloWorld {
         MLDataSet trainingSet = new BasicMLDataSet(XOR_INPUTS, XOR_IDEALS);
 
         // Use a training object for the learning algorithm, backpropagation.
-        final BasicTraining training = new Backpropagation(network, trainingSet,LEARNING_RATE,LEARNING_MOMENTUM);
+//        final BasicTraining training = new Backpropagation(network, trainingSet,LEARNING_RATE,LEARNING_MOMENTUM);
+        final BasicTraining training = new ResilientPropagation(network, trainingSet);
 
         // Set learning batch size: 0 = batch, 1 = online, n = batch size
         // See org.encog.neural.networks.training.BatchSize
@@ -91,19 +92,38 @@ public class XorHelloWorld {
 
         int epoch = 0;
 
-        EncogHelper.log(epoch, training,false);
+        double minError = Double.MAX_VALUE;
+
+        int sameCount = 0;
+
+        double error = 0.0;
+
+        final int MAX_SAME_COUNT = 5*EncogHelper.LOG_FREQUENCY;
+        EncogHelper.log(epoch, error,false, false);
         do {
             training.iteration();
 
             epoch++;
 
-            EncogHelper.log(epoch, training,false);
+            error = training.getError();
 
-        } while (training.getError() > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
+            if(error < minError) {
+                minError = error;
+                sameCount = 1;
+            }
+            else
+                sameCount++;
+
+            if(sameCount >= MAX_SAME_COUNT)
+                break;
+
+            EncogHelper.log(epoch, error,false,false);
+
+        } while (error > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
 
         training.finishTraining();
 
-        EncogHelper.log(epoch, training,true);
+        EncogHelper.log(epoch, error,sameCount >= MAX_SAME_COUNT, true);
         EncogHelper.report(trainingSet, network);
         EncogHelper.describe(network);
 

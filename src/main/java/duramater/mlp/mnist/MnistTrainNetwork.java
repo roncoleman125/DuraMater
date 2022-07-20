@@ -69,6 +69,7 @@ public class MnistTrainNetwork {
         network.getStructure().finalizeStructure();
 
         network.reset();
+        EncogHelper.summarize(network);
 
         MLDataSet trainingSet = new BasicMLDataSet(trainInputs, trainIdeals);
 
@@ -86,7 +87,7 @@ public class MnistTrainNetwork {
         int sameCount = 0;
         double error = 0.0;
         final int MAX_SAME_COUNT = 5*EncogHelper.LOG_FREQUENCY;
-        EncogHelper.log(epoch, training,false);
+        EncogHelper.log(epoch, error,false, false);
         do {
             training.iteration();
 
@@ -97,6 +98,7 @@ public class MnistTrainNetwork {
             if(error < minError) {
                 minError = error;
                 sameCount = 1;
+                EncogDirectoryPersistence.saveObject(new File("c:/marist/tmp/encogmnist.bin"),network);
             }
             else
                 sameCount++;
@@ -104,14 +106,15 @@ public class MnistTrainNetwork {
             if(sameCount >= MAX_SAME_COUNT)
                 break;
 
-            EncogHelper.log(epoch, training,false);
+            EncogHelper.log(epoch, error, false, false);
         } while (error > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
 
-        EncogHelper.log(epoch, training,true);
+        EncogHelper.log(epoch, error,sameCount >= MAX_SAME_COUNT, true);
 
         training.finishTraining();
 
-        EncogDirectoryPersistence.saveObject(new File("/users/roncoleman/tmp/encogmnist.bin"),network);
+        if(error < minError)
+            EncogDirectoryPersistence.saveObject(new File("c:/marist/tmp/encogmnist.bin"),network);
 
 //        EncogHelper.log(epoch, training,true);
 //        EncogHelper.report(trainingSet, network);

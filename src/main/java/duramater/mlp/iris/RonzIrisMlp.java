@@ -32,6 +32,7 @@ import org.encog.engine.network.activation.ActivationTANH;
 import org.encog.mathutil.Equilateral;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLDataSet;
+import org.encog.ml.train.BasicTraining;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
 import org.encog.neural.networks.training.propagation.Propagation;
@@ -100,26 +101,46 @@ public class RonzIrisMlp {
         // Use a training object for the learning algorithm, in this case, an improved
         // backpropagation. For details on what this does see the javadoc.
 //        final Propagation train = new Backpropagation(network, trainingSet,LEARNING_RATE,LEARNING_MOMENTUM);
-        final Propagation train = new ResilientPropagation(network, trainingSet);
+        final BasicTraining training = new ResilientPropagation(network, trainingSet);
 
         // Set learning batch size: 0 = batch, 1 = online, n = batch size
         // See org.encog.neural.networks.training.BatchSize
-         train.setBatchSize(0);
+//         training.setBatchSize(0);
 
         int epoch = 0;
 
-        EncogHelper.log(epoch, train,false);
+        double minError = Double.MAX_VALUE;
+
+        int sameCount = 0;
+
+        double error = 0.0;
+
+        final int MAX_SAME_COUNT = 5*EncogHelper.LOG_FREQUENCY;
+
+        EncogHelper.log(epoch, error, false, false);
         do {
-            train.iteration();
+            training.iteration();
 
             epoch++;
 
-            EncogHelper.log(epoch, train,false);
+            error = training.getError();
 
-        } while (train.getError() > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
+            if(error < minError) {
+                minError = error;
+                sameCount = 1;
+            }
+            else
+                sameCount++;
 
-        train.finishTraining();
-        EncogHelper.log(epoch, train,true);
+            if(sameCount >= MAX_SAME_COUNT)
+                break;
+
+            EncogHelper.log(epoch, error,false,false);
+
+        } while (error > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
+
+        training.finishTraining();
+        EncogHelper.log(epoch, error,sameCount >= MAX_SAME_COUNT, true);
         EncogHelper.report(trainingSet, network);
 
         System.out.println("Network description: after training");

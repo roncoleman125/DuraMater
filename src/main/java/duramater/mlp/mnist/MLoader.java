@@ -4,6 +4,7 @@ package duramater.mlp.mnist;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
+import java.util.Random;
 import java.util.zip.CRC32;
 
 public class MLoader implements IMLoader {
@@ -17,41 +18,47 @@ public class MLoader implements IMLoader {
         this.dataPath = dataPath;
         this.labelsPath = labelsPath;
     }
+
     @Override
-    public MDigit[] load() throws Exception {
-        DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(dataPath)));
-        this.pixelsMagic = dataInputStream.readInt();
-        int nDigits = dataInputStream.readInt();
+    public MDigit[] load() {
+        MDigit[] digits = null;
+        try {
+            DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(dataPath)));
+            this.pixelsMagic = dataInputStream.readInt();
+            int nDigits = dataInputStream.readInt();
 
-        int nRows = dataInputStream.readInt();
-        int nCols = dataInputStream.readInt();
+            int nRows = dataInputStream.readInt();
+            int nCols = dataInputStream.readInt();
 
-        DataInputStream labelInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(labelsPath)));
-        this.labelsMagic = labelInputStream.readInt();
-        int nLabels = labelInputStream.readInt();
+            DataInputStream labelInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(labelsPath)));
+            this.labelsMagic = labelInputStream.readInt();
+            int nLabels = labelInputStream.readInt();
 
-        assert(nDigits == nLabels);
+            assert (nDigits == nLabels);
 
-        MDigit[] digits = new MDigit[nDigits];
+            digits = new MDigit[nDigits];
 
-        for(int digitno = 0; digitno < nDigits; digitno++) {
-            double[] pixels = new double[nRows*nCols];
+            for (int digitno = 0; digitno < nDigits; digitno++) {
+                double[] pixels = new double[nRows * nCols];
 
-            int label = labelInputStream.readUnsignedByte();
-            for (int r = 0; r < nRows; r++) {
-                for (int c = 0; c < nCols; c++) {
-                    int pixel = dataInputStream.readUnsignedByte();
-                    crc.update(pixel);
-                    pixels[nCols*r + c] = pixel;
-                    crc.update(pixel);
+                int label = labelInputStream.readUnsignedByte();
+                for (int r = 0; r < nRows; r++) {
+                    for (int c = 0; c < nCols; c++) {
+                        int pixel = dataInputStream.readUnsignedByte();
+                        crc.update(pixel);
+                        pixels[nCols * r + c] = pixel;
+                        crc.update(pixel);
+                    }
                 }
+                digits[digitno] = new MDigit(digitno, pixels, label);
             }
-            digits[digitno] = new MDigit(pixels,label);
+
+            dataInputStream.close();
+            labelInputStream.close();
         }
-
-        dataInputStream.close();
-        labelInputStream.close();
-
+        catch(Exception e) {
+            e.printStackTrace();
+        }
         return digits;
     }
 
@@ -71,11 +78,24 @@ public class MLoader implements IMLoader {
     }
 
     public static void main(String[] args) throws Exception {
-        IMLoader loader = new MLoader("data/t10k-images.idx3-ubyte","data/t10k-labels.idx1-ubyte");
+        Random ran = new Random();
+//        IMLoader loader = new MLoader("data/t10k-images.idx3-ubyte","data/t10k-labels.idx1-ubyte");
+        IMLoader loader = new MLoader("data/train-images.idx3-ubyte","data/train-labels.idx1-ubyte");
+
         MDigit[] digits = loader.load();
         System.out.println("digits: "+digits.length);
         System.out.println("pixels magic: "+loader.getPixelsMagic());
         System.out.println("labels magic: "+loader.getLabelsMagic());
         System.out.println("checksum: "+loader.getChecksum());
+        for(int idx=27; idx < digits.length; idx++) {
+            if(digits[idx].label() == 7) {
+                System.out.println(digits[idx] + "");
+                break;
+            }
+        }
+//        int digitno = 2; //ran.nextInt(digits.length);
+//        System.out.println("digitno: "+digitno);
+//        System.out.println(digits[digitno]+"");
+
     }
 }
