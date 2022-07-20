@@ -94,11 +94,11 @@ public class XorHelloWorld {
 
         double minError = Double.MAX_VALUE;
 
-        int sameCount = 0;
-
         double error = 0.0;
 
+        int sameCount = 0;
         final int MAX_SAME_COUNT = 5*EncogHelper.LOG_FREQUENCY;
+
         EncogHelper.log(epoch, error,false, false);
         do {
             training.iteration();
@@ -123,7 +123,7 @@ public class XorHelloWorld {
 
         training.finishTraining();
 
-        EncogHelper.log(epoch, error,sameCount >= MAX_SAME_COUNT, true);
+        EncogHelper.log(epoch, error,sameCount>=MAX_SAME_COUNT, true);
         EncogHelper.report(trainingSet, network);
         EncogHelper.describe(network);
 
