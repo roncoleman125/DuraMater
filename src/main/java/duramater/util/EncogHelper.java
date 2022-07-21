@@ -3,10 +3,12 @@ package duramater.util;
 import org.encog.ml.data.MLData;
 import org.encog.ml.data.MLDataPair;
 import org.encog.ml.data.MLDataSet;
-import org.encog.ml.train.BasicTraining;
 import org.encog.neural.networks.BasicNetwork;
 
 public class EncogHelper {
+    /** Error tolerance: 1% */
+    public final static double TOLERANCE = 0.01;
+
     /** Maximum iterations to run */
     public final static long MAX_EPOCHS = 100000L;
 
@@ -133,7 +135,7 @@ public class EncogHelper {
     /**
      * Logs statistics for each epoch.
      * @param epoch Epoch number
-     * @param train Training results
+     * @param error Training error
      * @param done  True if the training is done
      */
     public static void log(int epoch, double error, boolean sameExceeded, boolean done) {
@@ -148,7 +150,9 @@ public class EncogHelper {
         else if (done && (epoch % LOG_FREQUENCY) != 0)
             System.out.printf("%8d %6.4f\n", epoch, error);
 
-        if(sameExceeded || epoch >= MAX_EPOCHS && done || sameExceeded)
+        if(done && error < TOLERANCE)
+            System.out.println("--- CONVERFED!");
+        else if(sameExceeded || epoch >= MAX_EPOCHS && done)
             System.out.println("--- DID NOT CONVERGE!");
     }
 }

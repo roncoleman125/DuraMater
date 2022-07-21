@@ -79,8 +79,8 @@ public class MLoader implements IMLoader {
 
     public static void main(String[] args) throws Exception {
         Random ran = new Random();
-//        IMLoader loader = new MLoader("data/t10k-images.idx3-ubyte","data/t10k-labels.idx1-ubyte");
-        IMLoader loader = new MLoader("data/train-images.idx3-ubyte","data/train-labels.idx1-ubyte");
+        IMLoader loader = new MLoader("data/t10k-images.idx3-ubyte","data/t10k-labels.idx1-ubyte");
+//        IMLoader loader = new MLoader("data/train-images.idx3-ubyte","data/train-labels.idx1-ubyte");
 
         MDigit[] digits = loader.load();
         System.out.println("digits: "+digits.length);

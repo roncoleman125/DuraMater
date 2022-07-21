@@ -56,8 +56,8 @@ public class MnistTrainNetwork {
 
 //        double[][] trainInputs = trainingArrays.getInputs(60000);
 //        double[][] trainIdeals = trainingArrays.getIdeals(60000);
-        double[][] trainInputs = trainingArrays.getInputs(2000);
-        double[][] trainIdeals = trainingArrays.getIdeals(2000);
+        double[][] trainInputs = trainingArrays.getInputs(100/*2000*/);
+        double[][] trainIdeals = trainingArrays.getIdeals(100/*2000*/);
 
         BasicNetwork network = new BasicNetwork();
 
@@ -114,7 +114,10 @@ public class MnistTrainNetwork {
         training.finishTraining();
 
         if(error < minError)
-            EncogDirectoryPersistence.saveObject(new File("c:/marist/tmp/encogmnist.bin"),network);
+            EncogDirectoryPersistence.saveObject(new File("c:/marist/tmp/encogmnist.bin"), network);
+
+        if(error < TOLERANCE)
+            System.out.println("CONVERGED!");
 
 //        EncogHelper.log(epoch, training,true);
 //        EncogHelper.report(trainingSet, network);
