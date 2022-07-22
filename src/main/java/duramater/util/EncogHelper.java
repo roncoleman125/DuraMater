@@ -151,7 +151,7 @@ public class EncogHelper {
             System.out.printf("%8d %6.4f\n", epoch, error);
 
         if(done && error < TOLERANCE)
-            System.out.println("--- CONVERFED!");
+            System.out.println("--- CONVERGED!");
         else if(sameExceeded || epoch >= MAX_EPOCHS && done)
             System.out.println("--- DID NOT CONVERGE!");
     }

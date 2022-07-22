@@ -6,11 +6,11 @@ import org.encog.ml.data.MLDataPair;
 import org.encog.ml.data.MLDataSet;
 import org.encog.neural.networks.BasicNetwork;
 
-public class MValidator {
+public class MExercise {
     record Report(int tried,int hit) {}
     BasicNetwork network;
     MLDataSet dataset;
-    public MValidator(BasicNetwork network, MLDataSet dataset) {
+    public MExercise(BasicNetwork network, MLDataSet dataset) {
         this.network = network;
         this.dataset = dataset;
     }
