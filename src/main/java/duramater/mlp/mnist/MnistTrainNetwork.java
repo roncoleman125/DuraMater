@@ -6,6 +6,8 @@ import duramater.knn.mnist.model.MnistMatrix;
 import duramater.util.EncogHelper;
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
+import org.encog.ml.data.MLData;
+import org.encog.ml.data.MLDataPair;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.ml.train.BasicTraining;
@@ -56,8 +58,8 @@ public class MnistTrainNetwork {
 
 //        double[][] trainInputs = trainingArrays.getInputs(60000);
 //        double[][] trainIdeals = trainingArrays.getIdeals(60000);
-        double[][] trainInputs = trainingArrays.getInputs(100/*2000*/);
-        double[][] trainIdeals = trainingArrays.getIdeals(100/*2000*/);
+        double[][] trainInputs = trainingArrays.getInputs(10/*2000*/);
+        double[][] trainIdeals = trainingArrays.getIdeals(10/*2000*/);
 
         BasicNetwork network = new BasicNetwork();
 
@@ -116,12 +118,10 @@ public class MnistTrainNetwork {
         if(error < minError)
             EncogDirectoryPersistence.saveObject(new File("c:/marist/tmp/encogmnist.bin"), network);
 
-        if(error < TOLERANCE)
-            System.out.println("CONVERGED!");
-
-//        EncogHelper.log(epoch, training,true);
-//        EncogHelper.report(trainingSet, network);
-//        EncogHelper.describe(network);
+        MValidator mv = new MValidator(network,trainingSet);
+        MValidator.Report report = mv.report();
+        double success = report.hit()/((double) report.tried()) * 100;
+        System.out.printf("success rate = %d/%d (%4.1f%%)", report.hit(), report.tried(), success);
 
         Encog.getInstance().shutdown();
     }
