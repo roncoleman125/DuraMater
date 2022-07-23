@@ -15,6 +15,7 @@ import org.encog.neural.networks.training.propagation.resilient.ResilientPropaga
 import org.encog.persist.EncogDirectoryPersistence;
 
 import java.io.File;
+import java.util.Date;
 
 /**
  * XOR: This example is essentially the "Hello World" of neural network
@@ -45,19 +46,25 @@ public class MnistTrainNetwork {
     /** Error tolerance: 1% */
     public final static double TOLERANCE = 0.01;
 
+    public final static int NUM_SAMPLES = 2000;
+
+    public final static String netPath = "c:/marist/tmp/encogmnist-"+NUM_SAMPLES+".bin";
+
     /**
      * The main method.
      * @param args No arguments are used.
      */
     public static void main(final String args[]) throws Exception {
+        System.out.println("started: "+new Date());
+
         ////////////////
         MnistMatrix[] mnistTrainMatrix = new MnistDataReader().readData("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
         MnistArrays trainingArrays = new MnistArrays(mnistTrainMatrix);
 
 //        double[][] trainInputs = trainingArrays.getInputs(60000);
 //        double[][] trainIdeals = trainingArrays.getIdeals(60000);
-        double[][] trainInputs = trainingArrays.getInputs(100/*2000*/);
-        double[][] trainIdeals = trainingArrays.getIdeals(100/*2000*/);
+        double[][] trainInputs = trainingArrays.getInputs(NUM_SAMPLES);
+        double[][] trainIdeals = trainingArrays.getIdeals(NUM_SAMPLES);
 
         BasicNetwork network = new BasicNetwork();
 
@@ -86,7 +93,8 @@ public class MnistTrainNetwork {
         double minError = Double.MAX_VALUE;
         int sameCount = 0;
         double error = 0.0;
-        final int MAX_SAME_COUNT = 5*EncogHelper.LOG_FREQUENCY;
+        final int MAX_SAME_COUNT = 2*EncogHelper.LOG_FREQUENCY;
+        System.out.println("max same count: "+MAX_SAME_COUNT);
         EncogHelper.log(epoch, error,false, false);
         do {
             training.iteration();
@@ -98,7 +106,7 @@ public class MnistTrainNetwork {
             if(error < minError) {
                 minError = error;
                 sameCount = 1;
-                EncogDirectoryPersistence.saveObject(new File("c:/marist/tmp/encogmnist.bin"),network);
+                EncogDirectoryPersistence.saveObject(new File(netPath),network);
             }
             else
                 sameCount++;
@@ -109,18 +117,22 @@ public class MnistTrainNetwork {
             EncogHelper.log(epoch, error, false, false);
         } while (error > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
 
+        System.out.println("same count: "+sameCount);
+
         EncogHelper.log(epoch, error,sameCount >= MAX_SAME_COUNT, true);
 
         training.finishTraining();
 
         if(error < minError)
-            EncogDirectoryPersistence.saveObject(new File("c:/marist/tmp/encogmnist.bin"), network);
+            EncogDirectoryPersistence.saveObject(new File(netPath), network);
 
         MExercise mv = new MExercise(network,trainingSet);
         MExercise.Report report = mv.report();
         double success = report.hit()/((double) report.tried()) * 100;
-        System.out.printf("success rate = %d/%d (%4.1f%%)", report.hit(), report.tried(), success);
+        System.out.printf("success rate = %d/%d (%4.1f%%)\n", report.hit(), report.tried(), success);
 
         Encog.getInstance().shutdown();
+
+        System.out.println("finished: "+new Date());
     }
 }
