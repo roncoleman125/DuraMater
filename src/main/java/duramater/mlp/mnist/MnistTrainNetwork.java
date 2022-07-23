@@ -93,8 +93,7 @@ public class MnistTrainNetwork {
         double minError = Double.MAX_VALUE;
         int sameCount = 0;
         double error = 0.0;
-        final int MAX_SAME_COUNT = 2*EncogHelper.LOG_FREQUENCY;
-        System.out.println("max same count: "+MAX_SAME_COUNT);
+        final int MAX_SAME_COUNT = 3*EncogHelper.LOG_FREQUENCY;
         EncogHelper.log(epoch, error,false, false);
         do {
             training.iteration();
@@ -119,7 +118,7 @@ public class MnistTrainNetwork {
 
         System.out.println("same count: "+sameCount);
 
-        EncogHelper.log(epoch, error,sameCount >= MAX_SAME_COUNT, true);
+        EncogHelper.log(epoch, error,sameCount > MAX_SAME_COUNT, true);
 
         training.finishTraining();
 
