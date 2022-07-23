@@ -1,6 +1,8 @@
 package duramater.mlp.mnist;
 
 
+import org.encog.mathutil.Equilateral;
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
@@ -75,6 +77,32 @@ public class MLoader implements IMLoader {
     @Override
     public long getChecksum() {
         return crc.getValue();
+    }
+
+    @Override
+    public Normal normalize(int start, int end) {
+        MDigit[] digits = this.load();
+
+        int nRows = end-start;
+        int nCells = 28*28;
+
+        double[][] pixels = new double[nRows][nCells];
+        double[][] labels = new double[nRows][];
+
+        Equilateral eq = new Equilateral(10,1.0,0.0);
+        for(int digitno=start; digitno < end; digitno++) {
+            MDigit digit = digits[digitno];
+//            System.out.println(digit.toString()+"");
+            for(int cellno=0; cellno < nCells; cellno++) {
+                double pixel = digit.pixels()[cellno];
+                double normalizedPixel = pixel / 255.0;
+                pixels[digitno-start][cellno] = normalizedPixel;
+            }
+            int cat = digits[digitno-start].label();
+            double[] encodedLabel = eq.encode(cat);
+            labels[digitno-start] = encodedLabel;
+        }
+        return new Normal(pixels,labels);
     }
 
     public static void main(String[] args) throws Exception {

@@ -58,13 +58,21 @@ public class MnistTrainNetwork {
         System.out.println("started: "+new Date());
 
         ////////////////
-        MnistMatrix[] mnistTrainMatrix = new MnistDataReader().readData("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
-        MnistArrays trainingArrays = new MnistArrays(mnistTrainMatrix);
+//        MnistMatrix[] mnistTrainMatrix = new MnistDataReader().readData("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
+//        MnistArrays trainingArrays = new MnistArrays(mnistTrainMatrix);
+//
+////        double[][] trainInputs = trainingArrays.getInputs(60000);
+////        double[][] trainIdeals = trainingArrays.getIdeals(60000);
+//        double[][] trainInputs = trainingArrays.getInputs(NUM_SAMPLES);
+//        double[][] trainIdeals = trainingArrays.getIdeals(NUM_SAMPLES);
+        IMLoader mloader = new MLoader("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
+        IMLoader.Normal normal = mloader.normalize(0,NUM_SAMPLES);
 
-//        double[][] trainInputs = trainingArrays.getInputs(60000);
-//        double[][] trainIdeals = trainingArrays.getIdeals(60000);
-        double[][] trainInputs = trainingArrays.getInputs(NUM_SAMPLES);
-        double[][] trainIdeals = trainingArrays.getIdeals(NUM_SAMPLES);
+        double[][] trainInputs = normal.pixels();
+        double[][] trainIdeals = normal.labels();
+
+        assert(trainIdeals[0].length == 9);
+        assert(trainInputs[0].length == 28*28);
 
         BasicNetwork network = new BasicNetwork();
 
@@ -115,8 +123,6 @@ public class MnistTrainNetwork {
 
             EncogHelper.log(epoch, error, false, false);
         } while (error > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
-
-        System.out.println("same count: "+sameCount);
 
         EncogHelper.log(epoch, error,sameCount > MAX_SAME_COUNT, true);
 
