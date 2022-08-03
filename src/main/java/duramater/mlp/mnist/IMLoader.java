@@ -39,5 +39,5 @@ public interface IMLoader {
      * Normalizes the data.
      * @return Normalized data
      */
-    public Normal normalize(int start,int end);
+    public Normal normalize();
 }

@@ -1,8 +1,6 @@
 package duramater.mlp.mnist;
 
-import duramater.knn.mnist.model.MnistArrays;
-import duramater.knn.mnist.model.MnistDataReader;
-import duramater.knn.mnist.model.MnistMatrix;
+import duramater.matrix.Mop;
 import duramater.util.EncogHelper;
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
@@ -17,24 +15,6 @@ import org.encog.persist.EncogDirectoryPersistence;
 import java.io.File;
 import java.util.Date;
 
-/**
- * XOR: This example is essentially the "Hello World" of neural network
- * programming. This example shows how to construct an Encog neural network to
- * predict the report from the XOR operator. This example uses backpropagation
- * to train the neural network.
- *
- * This example attempts to use a minimum of Encog values to create and train
- * the neural network. This allows you to see exactly what is going on. For a
- * more advanced example, that uses Encog factories, refer to the XORFactory
- * example.
- *
- * The original version of this code does not appear to converge. I fixed this
- * problem by using two neurons in the hidden layer and instead of ramped activation,
- * sigmoid activation. This makes the network reflect the model in figure 1.1
- * in the book, d. 11. I also added more comments to make the code more explanatory.
- * @author Ron Coleman
- * @date 24 Oct 2017
- */
 public class MnistTrainNetwork {
     /**
      * These learning parameters generally give good results according to literature,
@@ -66,10 +46,11 @@ public class MnistTrainNetwork {
 //        double[][] trainInputs = trainingArrays.getInputs(NUM_SAMPLES);
 //        double[][] trainIdeals = trainingArrays.getIdeals(NUM_SAMPLES);
         IMLoader mloader = new MLoader("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
-        IMLoader.Normal normal = mloader.normalize(0,NUM_SAMPLES);
+        IMLoader.Normal normal = mloader.normalize();
 
-        double[][] trainInputs = normal.pixels();
-        double[][] trainIdeals = normal.labels();
+        Mop mop = new Mop();
+        double[][] trainInputs = mop.slice(normal.pixels(),0,NUM_SAMPLES);
+        double[][] trainIdeals = mop.slice(normal.labels(),0,NUM_SAMPLES);
 
         assert(trainIdeals[0].length == 9);
         assert(trainInputs[0].length == 28*28);

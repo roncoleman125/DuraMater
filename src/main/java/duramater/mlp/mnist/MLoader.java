@@ -80,27 +80,27 @@ public class MLoader implements IMLoader {
     }
 
     @Override
-    public Normal normalize(int start, int end) {
+    public Normal normalize() {
         MDigit[] digits = this.load();
 
-        int nRows = end-start;
+        int nRows = digits.length;
         int nCells = 28*28;
 
         double[][] pixels = new double[nRows][nCells];
         double[][] labels = new double[nRows][];
 
         Equilateral eq = new Equilateral(10,1.0,0.0);
-        for(int digitno=start; digitno < end; digitno++) {
+        for(int digitno=0; digitno < nRows; digitno++) {
             MDigit digit = digits[digitno];
 //            System.out.println(digit.toString()+"");
             for(int cellno=0; cellno < nCells; cellno++) {
                 double pixel = digit.pixels()[cellno];
                 double normalizedPixel = pixel / 255.0;
-                pixels[digitno-start][cellno] = normalizedPixel;
+                pixels[digitno][cellno] = normalizedPixel;
             }
-            int cat = digits[digitno-start].label();
+            int cat = digits[digitno].label();
             double[] encodedLabel = eq.encode(cat);
-            labels[digitno-start] = encodedLabel;
+            labels[digitno] = encodedLabel;
         }
         return new Normal(pixels,labels);
     }
