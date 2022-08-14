@@ -34,7 +34,8 @@ import org.encog.ml.genetic.genome.DoubleArrayGenomeFactory;
 
 import java.util.Random;
 
-import static javaai.util.Helper.asString;
+import static duramater.util.EncogHelper.asString;
+
 
 /**
  * This class learns the weights using unsupervised learning for the XOR problem.

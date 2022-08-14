@@ -17,14 +17,14 @@ public class K1ns {
         System.out.println(this.getClass().getName());
 
         ////////////////
-        MnistMatrix[] mnistTrainMatrix = new MnistDataReader().readData("observations/train-images.idx3-ubyte", "observations/train-labels.idx1-ubyte");
+        MnistMatrix[] mnistTrainMatrix = new MnistDataReader().readData("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
         MnistArrays trainingArrays = new MnistArrays(mnistTrainMatrix);
 
         double[][] trainInputs = trainingArrays.getInputs(60000);
         double[][] trainIdeals = trainingArrays.getIdeals(60000);
 
         ////////////////
-        MnistMatrix[] mnistTestMatrix = new MnistDataReader().readData("observations/t10k-images.idx3-ubyte", "observations/t10k-labels.idx1-ubyte");
+        MnistMatrix[] mnistTestMatrix = new MnistDataReader().readData("data/t10k-images.idx3-ubyte", "data/t10k-labels.idx1-ubyte");
         MnistArrays testArrays = new MnistArrays(mnistTestMatrix);
 
         double[][] testInputs = testArrays.getInputs(10000);
