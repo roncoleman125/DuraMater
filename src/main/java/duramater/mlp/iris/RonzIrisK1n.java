@@ -22,6 +22,7 @@
  */
 package duramater.mlp.iris;
 
+import duramater.matrix.Mop;
 import duramater.util.IrisHelper;
 import org.apache.commons.math3.stat.StatUtils;
 import org.encog.Encog;
@@ -29,10 +30,7 @@ import org.encog.mathutil.Equilateral;
 import org.encog.util.arrayutil.NormalizationAction;
 import org.encog.util.arrayutil.NormalizedField;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -91,7 +89,7 @@ public class RonzIrisK1n {
             // Get the input
             double[] target = TESTING_INPUTS[k];
 
-            Nearest nearest = getNearest(target);
+            Nearest nearest = getNearest(target,TRAINING_INPUTS);
 
             // Get the output and decode it to a subtype index.
             int predictedno = eq.decode(TRAINING_IDEALS[nearest.candidate().no()]);
@@ -127,11 +125,11 @@ public class RonzIrisK1n {
         Encog.getInstance().shutdown();
     }
 
-    static Nearest getNearest(double[] target) {
+    static Nearest getNearest(double[] target,double[][] model) {
         // Sort candidates by distance to target
         List<Candidate> candidates =
-                IntStream.range(0, TRAINING_INPUTS.length)
-                        .mapToObj(no -> new Candidate(no, TRAINING_INPUTS[no], getDist(TRAINING_INPUTS[no], target)))
+                IntStream.range(0, model.length)
+                        .mapToObj(no -> new Candidate(no, model[no], getDist(model[no], target)))
                         .sorted((obj1, obj2) -> {
                             if (obj1.dist() > obj2.dist())
                                 return 1;
@@ -140,28 +138,28 @@ public class RonzIrisK1n {
                         }).collect(Collectors.toList());
         ///////////////////////
         // Uncomment below to return the simple nearest.
-//        Candidate nearest = candidates.get(0);
-//        return nearest;
+        Candidate candidate = candidates.get(0);
+        return new Nearest(candidate,Collections.singletonMap(candidate.no(),1));//new Nearest(nearest,new ArrayList<Integer>(Arrays.asList(1)));
 
         ///////////////////////
         // Uncomment below to use K-nearest algorithm
-        final int k = 5;
-        Map<Integer, Integer> votes = new HashMap<>();
-        IntStream.range(0, k).forEach(idx -> {
-            int candidate = eq.decode(TRAINING_IDEALS[candidates.get(idx).no()]);
-            int freq = votes.getOrDefault(candidate, 0);
-            votes.put(candidate, freq + 1);
-        });
-
-        int winner = votes.entrySet().stream().sorted((e1, e2) -> {
-            if (e1.getValue() > e2.getValue())
-                return 1;
-            else
-                return -1;
-        }).collect(Collectors.toList()).get(0).getKey();
-
-        Candidate popular = candidates.get(winner);
-        return new Nearest(popular, votes);
+//        final int k = 5;
+//        Map<Integer, Integer> votes = new HashMap<>();
+//        IntStream.range(0, k).forEach(idx -> {
+//            int candidate = eq.decode(TRAINING_IDEALS[candidates.get(idx).no()]);
+//            int freq = votes.getOrDefault(candidate, 0);
+//            votes.put(candidate, freq + 1);
+//        });
+//
+//        int winner = votes.entrySet().stream().sorted((e1, e2) -> {
+//            if (e1.getValue() > e2.getValue())
+//                return 1;
+//            else
+//                return -1;
+//        }).collect(Collectors.toList()).get(0).getKey();
+//
+//        Candidate popular = candidates.get(winner);
+//        return new Nearest(popular, votes);
     }
 
     public static double getDist(double[] p1, double[] p2) {
@@ -174,29 +172,32 @@ public class RonzIrisK1n {
      * Initializes the training and pt arrays.
      */
     static void init() {
-//        CsvLoader csvDicer = new CsvLoader("data/iris.csv");
-//        double[][] observations = csvDicer.load();
-//
-//        double[][] inputs = normalize(observations, 0, 4);
-//
-//        TRAINING_INPUTS = slice(transpose(inputs), 0, 120);
-//        TESTING_INPUTS = slice(transpose(inputs), 120, 150);
-//
-//        double[][] outputs = encode(observations, 4, 5);
-//
-//        TRAINING_IDEALS = slice(outputs, 0, 120);
-//        TESTING_IDEALS = slice(outputs, 120, 150);
-//
-//        report("training", TRAINING_INPUTS, TRAINING_IDEALS);
+        IrisHelper csvDicer = new IrisHelper();
+        double[][] observations = csvDicer.load("data/iris.csv");
 
+        double[][] inputs = normalize(observations, 0, 4);
+
+        Mop mop = new Mop();
+        TRAINING_INPUTS = mop.slice(inputs, 0, 120);
+        TESTING_INPUTS = mop.slice(inputs, 120, 150);
+
+        double[][] outputs = encode(observations, 4, 5);
+
+        TRAINING_IDEALS = mop.slice(outputs, 0, 120);
+        TESTING_IDEALS = mop.slice(outputs, 120, 150);
+
+        report("training", TRAINING_INPUTS, TRAINING_IDEALS);
     }
 
     static double[][] normalize(double[][] observations, int startCol, int endCol) {
         /////////////// Normalize inputs
         // Pass 1: calculate normalize fields
 
+        Mop mop = new Mop();
+
         IntStream.range(startCol, endCol).forEach(colno -> {
-            double[] column = observations[colno];
+            double[] column = mop.transpose(mop.dice(observations,colno,colno+1))[0];
+//            double[] column = observations[colno];
 
             double hi = StatUtils.max(column);
             double lo = StatUtils.min(column);
@@ -206,31 +207,31 @@ public class RonzIrisK1n {
         });
 
         // Pass 2: Using the normalized field, normalize the inputs
-        int numRows = observations[0].length;
+        int numRows = observations.length;
         int numCols = endCol - startCol;
 
-        double[][] inputsNormalized = new double[numCols][];
+        double[][] inputsNormalized = new double[numRows][];
 
-        IntStream.range(0, numCols).forEach(colno -> {
-            inputsNormalized[colno] = new double[numRows];
-            IntStream.range(0, numRows).forEach(rowno -> {
-                double datum = observations[colno][rowno];
+        IntStream.range(0, numRows).forEach(rowno -> {
+            inputsNormalized[rowno] = new double[numCols];
+            IntStream.range(0, numCols).forEach(colno -> {
+                double datum = observations[rowno][colno];
                 NormalizedField normalizer = normalizers.get(colno);
-                inputsNormalized[colno][rowno] = normalizer.normalize(datum);
+                inputsNormalized[rowno][colno] = normalizer.normalize(datum);
             });
         });
         return inputsNormalized;
     }
 
     static double[][] encode(double[][] observations, int startCol, int endCol) {
-        int numRows = observations[0].length;
+        int numRows = observations.length;
         int numCols = endCol - startCol;
         assert (numCols == 1);
 
         // Need only one pass here since the category is already a set
         double[][] outputsEncoded = new double[numRows][];
         IntStream.range(0, numRows).forEach(rowno -> {
-            int cat = (int) observations[startCol][rowno];
+            int cat = (int) observations[rowno][startCol];
             outputsEncoded[rowno] = eq.encode(cat);
         });
         return outputsEncoded;

@@ -2,7 +2,6 @@ package duramater.mlp.mnist;
 
 
 import org.encog.mathutil.Equilateral;
-
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
