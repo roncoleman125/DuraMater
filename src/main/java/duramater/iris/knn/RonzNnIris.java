@@ -30,12 +30,10 @@ import org.encog.mathutil.Equilateral;
 import org.encog.util.arrayutil.NormalizationAction;
 import org.encog.util.arrayutil.NormalizedField;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 
 /**
@@ -131,34 +129,40 @@ public class RonzNnIris {
         Encog.getInstance().shutdown();
     }
 
+    /**
+     * Get nearest to target in model.
+     * @param target Target
+     * @param model Model of all elements
+     * @return Nearest
+     */
     Nearest getNearest(double[] target,double[][] model) {
-        List<Candidate> candidates = getCandidates(target,model);
-        Candidate candidate = candidates.get(0);
+        // See https://stackoverflow.com/questions/30730861/how-to-get-the-index-and-max-value-of-an-array-in-one-shot
+        int bestno = IntStream
+                .range(0,model.length)
+                .reduce((a,b) -> getDist(target,model[a]) < getDist(target,model[b])?a:b)
+                .getAsInt();
+
+        Candidate candidate = new Candidate(bestno,model[bestno],getDist(target,model[bestno]));
+
+        // Singleton map contains the votes map with one element/vote
         return new Nearest(candidate,Collections.singletonMap(candidate.no(),1));
     }
 
-    List<Candidate> getCandidates(double[] target, double[][] model) {
-        // Sort candidates by distance to target
-        List<Candidate> candidates =
-                IntStream.range(0, model.length)
-                        .mapToObj(no -> new Candidate(no, model[no], getDist(model[no], target)))
-                        .sorted((obj1, obj2) -> {
-                            if (obj1.dist() > obj2.dist())
-                                return 1;
-                            else
-                                return -1;
-                        }).collect(Collectors.toList());
-        return candidates;
-    }
 
-    double getDist(double[] p1, double[] p2) {
-        double l2 = IntStream.range(0, p1.length)
-                .mapToDouble(idx -> (p1[idx] - p2[idx]) * (p1[idx] - p2[idx])).sum();
+    /**
+     * Get distance between two vectors.
+     * @param v1
+     * @param v2
+     * @return
+     */
+    double getDist(double[] v1, double[] v2) {
+        double l2 = IntStream.range(0, v1.length)
+                .mapToDouble(idx -> (v1[idx] - v2[idx]) * (v1[idx] - v2[idx])).sum();
         return l2;
     }
 
     /**
-     * Initializes the training and pt arrays.
+     * Initializes the training and test arrays.
      */
     void init() {
         IrisHelper csvDicer = new IrisHelper();

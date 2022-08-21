@@ -64,4 +64,19 @@ public class RonzKiris extends RonzNnIris {
         Candidate popular = candidates.get(winner);
         return new Nearest(popular, votes);
     }
+
+
+    List<Candidate> getCandidates(double[] target, double[][] model) {
+        // Sort candidates by distance to target
+        List<Candidate> candidates =
+                IntStream.range(0, model.length)
+                        .mapToObj(no -> new Candidate(no, model[no], getDist(model[no], target)))
+                        .sorted((obj1, obj2) -> {
+                            if (obj1.dist() > obj2.dist())
+                                return 1;
+                            else
+                                return -1;
+                        }).collect(Collectors.toList());
+        return candidates;
+    }
 }

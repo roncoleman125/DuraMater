@@ -7,9 +7,9 @@ import org.encog.mathutil.Equilateral;
 
 import java.io.IOException;
 
-public class K1ns {
+public class Nns {
     public static void main(String[] args) throws Exception {
-        K1ns test = new K1ns();
+        Nns test = new Nns();
         test.execute();
     }
 

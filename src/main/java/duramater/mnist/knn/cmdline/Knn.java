@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Knns {
+public class Knn {
     /**
      * See https://blog.jetbrains.com/idea/2020/03/java-14-and-intellij-idea/#:%7E:text=Configure%20IntelliJ%20IDEA%202020.1%20to,IntelliJ%20IDEA%20and%20configure%20it.
      */
@@ -131,7 +131,7 @@ public class Knns {
     }
 
     public static void main(String[] args) throws Exception {
-        Knns test = new Knns();
+        Knn test = new Knn();
         test.execute();
     }
 }
