@@ -22,293 +22,154 @@
  */
 package duramater.cluster;
 
-import duramater.cluster.Point1D;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.zip.CRC32;
 
 /**
- * Implements the k-means cluster algorithm.
+ * Your basic k-means clustering algorithm
  * @author Ron.Coleman
  */
 public class KMeans {
-    public final static int MAX_ITERATIONS = 300;
+    public final int MAX_ITERATIONS = 300;
 
-    /** High index */
-    public final static int HI = 1;
-
-    /** Low index */
-    public final static int LO = 0;
-
-    /** Reference to points algorithm uses */
-    protected List<Point1D> points = null;
-
-    /** Reference to clusters */
-    protected List<Cluster<Point1D>> clusters = new ArrayList<>();
-
-    /**
-     * Drives the k-means test.
-     * @param args Command line arguments
-     */
-    public static void main(final String[] args) {
-        // Validate inputs
-        if(args.length < 2) {
-            System.out.println("usage: "+KMeans.class.getSimpleName()+" num path");
-            System.exit(0);
-        }
-
-        // Get number of clusters and path to the observations
-        Integer num = Integer.parseInt(args[0]);
-        String path = args[1];
-
-        // Load the observations and convert them to points
-        List<Double> list = load(path);
-        List<Point1D> points = asPoints(list);
-
-        // Do the cluster analysis and describe results
-        KMeans km = new KMeans(points);
-
-        km.train(num);
-
-        km.report();
-    }
-
-    /**
-     * Convert list of doubles to 1D points.
-     * @param list List of doubles
-     * @return List of points
-     */
-    private static List<Point1D> asPoints(List<Double> list) {
-        List<Point1D> points = new ArrayList<>();
-        for(Double datum: list) {
-            points.add(new Point1D(datum));
-        }
-        return points;
-    }
-
-    /**
-     * Extracts, transforms, and loads the source observations from the file path.
-     * @param path File path
-     * @return List of doubles.
-     */
-    private static List<Double> load(String path) {
-        List<Double> list = new ArrayList<>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(path));
-            String line = null;
-            while((line = br.readLine()) != null) {
-                Double value = Double.parseDouble(line);
-                list.add(value);
-            }
-        }
-        catch(Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
+    int k;
+    List<Double[]> data;
+    List<Cluster> clusters = new ArrayList<>();
 
     /**
      * Constructor
-     * @param points Points
+     * @param k Number of clusters
+     * @param data Data to be clustered
      */
-    public KMeans(List<Point1D> points) {
-        this.points = points;
+    public KMeans(int k, List<Double[]> data) {
+        this.k = k;
+        this.data = data;
     }
 
     /**
-     * Gets the clusters with details enabled.
-     * @param n Number of clusters
-     * @return List of clusters
+     * Makes the clusters.
      */
-    public void train(Integer n) {
-        train(n,true);
-    }
+    public void train() {
+        init();
 
-    /**
-     * Gets the clusters.
-     * @param n Number of clusters
-     * @param details Toggle for details.
-     * @return List of clusters
-     */
-    public void train(Integer n, Boolean details) {
-        // Initialize the clusters.
-        Point1D[] range = getRange(points);
+        // To detect when the clusters converge
+        CRC32 crc = new CRC32();
 
-        Point1D step = range[HI].sub(range[LO]).div((double)n);
+        long oldHash = -1;
 
-        for(int k=0; k < n; k++) {
-            clusters.add(new Cluster<Point1D>(new ArrayList<Point1D>(), new Point1D(range[HI].sub(step.mult(k)))));
-        }
+        int iteration = 0;
 
-        // Use entropy as the convergence criteria.
-        double oldEntropy = getEntropy(clusters);
+        while(iteration < MAX_ITERATIONS) {
+            // Put each observation in its cluster
+            data.forEach(observation -> { assign(observation); });
 
-        // Since clusters might not converge, limit the number of iterations
-        int iter = 0;
-        while(iter < MAX_ITERATIONS) {
-            // Place every point into a cluster.
-            for(int k=0; k < points.size(); k++) {
-                // Shortest distance & nearest cluster so far
-                Double shortest = Double.MAX_VALUE;
+            // Sequence of sizes, if they don't change then clustering has converge
+            clusters.forEach(cluster -> { crc.update(cluster.members.size()); });
 
-                Cluster nearest = clusters.get(0);
+            // If the has changed, try one more time
+            long newHash = crc.getValue();
 
-                // Point to analyze
-                Point1D pt = points.get(k);
-
-                // Test distance to centroid of every cluster
-                for(Cluster<Point1D> cluster: clusters) {
-                    Double dist = cluster.centroid.distanceTo(pt);
-
-                    if (dist < shortest) {
-                        shortest = dist;
-                        nearest = cluster;
-                    }
-                }
-
-                // Put this point in the nearest cluster
-                nearest.add(pt);
-            }
-
-            // If the entropy has not changed, the clusters have settled.
-            double newEntropy = getEntropy(clusters);
-
-            if(newEntropy == oldEntropy)
+            // If has has NOT changed, clustering converged
+            if(newHash == oldHash)
                 break;
 
-            // Update the entropy
-            oldEntropy = newEntropy;
+            // Reestablish the hash
+            oldHash = newHash;
 
-            if(details) {
-                System.out.println("iteration: "+iter);
-                report();
-            }
+            crc.reset();
 
-            // Recenter clusters for points we just added to them.
+            // Update the centroids
             recenter();
 
-            iter++;
+            iteration++;
         }
     }
 
     /**
-     * Recenters clusters.
+     * Updates the centroids.
      */
-    protected void recenter() {
-        for(Cluster<Point1D> cluster: clusters) {
-            Point1D centroid = recenter(cluster);
+    void recenter() {
+        clusters.forEach(cluster -> {
+            Double[] centroid = cluster.centroid;
 
-            cluster.update(centroid);
+            List<Double[]> members = cluster.members;
 
-            cluster.clear();
+            int numCols = centroid.length;
+            int numRows = members.size();
+
+            // Calculate the mean over each column
+            for(int colno=0; colno < numCols; colno++) {
+                // For this column, sum all the rows
+                double sum = 0.0;
+                for(int rowno=0; rowno < numRows; rowno++) {
+                    sum += members.get(rowno)[colno];
+                }
+                // Here's mean for this column
+                double mean = sum / numRows;
+                centroid[colno] = mean;
+            }
+            // Won't need members since we have centroid -- members will be re-added by assign
+            members.clear();
+        });
+    }
+
+    /**
+     * Initializes the clusters
+     */
+    void init() {
+        // Take the first k rows of data for the centroids
+        List<Double[]> centroids = data.subList(0,k);
+
+        // Build the clusters now that we have centroids
+        IntStream.range(0,k).forEach(clusterIdx -> {
+            Double[] centroid = centroids.get(clusterIdx);
+
+            List<Double[]> members = new ArrayList<>();
+
+            Cluster cluster = new Cluster(centroid,members);
+            clusters.add(cluster);
+        });
+
+    }
+
+    /**
+     * Assigns a candidate to a cluster.
+     * @param candidate Candidate
+     */
+    void assign(Double[] candidate) {
+        // Find the nearest cluster by its centroid
+        int nearest = IntStream
+                .range(0,clusters.size())
+                .reduce((a,b) ->
+                        getDist(clusters.get(a).centroid,candidate) < getDist(clusters.get(b).centroid,candidate)?a:b)
+                .getAsInt();
+
+        // Nearest is a cluster index
+        clusters.get(nearest).members.add(candidate);
+    }
+
+    /**
+     * Gets the distance between a, b vectors.
+     * @param a Vector
+     * @param b Vector
+     * @return Distance
+     */
+    double getDist(Double[] a, Double[] b) {
+        double dist2 = 0;
+        for(int i=0; i < a.length; i++) {
+            dist2 += (a[i]-b[i])*(a[i]-b[i]);
         }
+        return dist2;
     }
 
-    /**
-     * Recenters a cluster.
-     * @param cluster Cluster
-     * @return Cluster centroid
-     */
-    protected Point1D recenter(Cluster<Point1D> cluster) {
-        Point1D sum = Point1D.zero();
-
-        for(Point1D pt: cluster.buffer) {
-            sum = sum.add(pt);
-        }
-        Point1D centroid = sum.div((double)cluster.size());
-
-        return centroid;
-    }
-
-    /**
-     * Calculates information entropy of clusters.
-     * @param clusters Clusters
-     * @return Entropy
-     */
-    protected double getEntropy(List<Cluster<Point1D>> clusters) {
-        double n = points.size();
-
-        double h = 0;
-
-        for(Cluster cluster: clusters) {
-            double p = cluster.size() / n;
-
-            if(p == 0)
-                return 0;
-
-            h += -p * log2(p);
-        }
-
-        return h;
-    }
-
-    /**
-     * Calculates hash of clusters.
-     * @param clusters Clusters
-     * @return Hash
-     */
-    protected long hash(List<Cluster<Point1D>> clusters) {
-        Long h = 1L;
-        for(Cluster cluster: clusters)
-            h = h * cluster.size();
-        return h;
-    }
-
-    /**
-     * Calculates log base 2
-     * @param x Value
-     * @return log base 2 value.
-     */
-    protected double log2(double x) {
-        final double c = 3.32192809489;
-
-        return c * Math.log10(x);
-    }
-
-    /**
-     * Gets the hi-lo range for a list.
-     * @param points Points
-     * @return 2-tuple of doubles for hi and low
-     */
-    protected Point1D[] getRange(List<Point1D> points) {
-        // Current high and low values
-        Point1D[] range = {Point1D.getHi(), Point1D.getLo()};
-
-        // Go through each value in the list
-        for(Point1D point: points) {
-            // If value above current high, update the high
-            if(point.gt( range[HI]))
-                range[HI] = point;
-
-            // If value below current low, update the low.
-            if(point.lt(range[LO]))
-                range[LO] = point;
-        }
-
-        return range;
-    }
 
     /**
      * Gets the clusters.
-     * @return Cluster list
+     * @return List of clusters
      */
-    public List<Cluster<Point1D>> getClusters() {
+    public List<Cluster> getCluster() {
         return clusters;
-    }
-
-    /**
-     * Output the clusters.
-     */
-    protected void report() {
-        System.out.printf("%3s %6s %6s %6s %4s %3s\n","#","lo","hi","center","size","%");
-        for(int k=0; k < clusters.size(); k++) {
-            Cluster<Point1D> cluster = clusters.get(k);
-            Point1D[] range = getRange(cluster.buffer);
-            int sz = cluster.size();
-            int percent = (int) ((double)sz / points.size() * 100 + 0.5);
-            System.out.printf("%3d %6s %6s %6s %4d %3d\n", k, range[LO], range[HI],cluster.centroid,sz,percent);
-        }
     }
 }

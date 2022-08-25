@@ -22,71 +22,23 @@
  */
 package duramater.cluster;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Container of cluster info by type.
- * @param <T> Type
+ * A cluster is just its centroid and its members.
  * @author Ron.Coleman
  */
-public class Cluster<T> {
-    public List<T> buffer = new ArrayList<>();
-    public T centroid;
+public class Cluster {
+    public Double[] centroid = null;
+    List<Double[]> members = null;
 
     /**
      * Constructor
-     * @param buffer Initial buffer.
-     * @param centroid Centroid for cluster
+     * @param centroid Cluster centroid
+     * @param members Cluster members
      */
-    public Cluster(List<T> buffer,T centroid) {
-        this.buffer = buffer;
+    public Cluster(Double[] centroid, List<Double[]> members) {
         this.centroid = centroid;
-    }
-
-    /**
-     * Updates the centroid.
-     * @param centroid Centroid
-     */
-    public void update(T centroid) {
-        this.centroid = centroid;
-    }
-
-    /**
-     * Adds a datum to the cluster.
-     * @param datum Datum
-     */
-    public void add(T datum) {
-        buffer.add(datum);
-    }
-
-    /**
-     * Gets the size of the cluster.
-     * @return Cluster size
-     */
-    public int size() {
-        return buffer.size();
-    }
-
-    /**
-     * Clears the cluster of all its members.
-     */
-    public void clear() {
-        buffer.clear();
-    }
-
-    /**
-     * Converts cluster to a string.
-     * @return
-     */
-    @Override
-    public String toString() {
-        int min = Math.min(5,buffer.size());
-        String str = "centroid: "+centroid+" sz: "+buffer.size() + " [";
-        for(int k=0; k < min; k++)
-            str += buffer.get(k) + " ";
-
-        str += "...]";
-        return str;
+        this.members = members;
     }
 }
