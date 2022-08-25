@@ -137,12 +137,12 @@ public class RonzNnIris {
      */
     Nearest getNearest(double[] target,double[][] model) {
         // See https://stackoverflow.com/questions/30730861/how-to-get-the-index-and-max-value-of-an-array-in-one-shot
-        int bestno = IntStream
+        int nearest = IntStream
                 .range(0,model.length)
                 .reduce((a,b) -> getDist(target,model[a]) < getDist(target,model[b])?a:b)
                 .getAsInt();
 
-        Candidate candidate = new Candidate(bestno,model[bestno],getDist(target,model[bestno]));
+        Candidate candidate = new Candidate(nearest,model[nearest],getDist(target,model[nearest]));
 
         // Singleton map contains the votes map with one element/vote
         return new Nearest(candidate,Collections.singletonMap(candidate.no(),1));

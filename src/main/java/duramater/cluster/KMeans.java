@@ -96,7 +96,7 @@ public class KMeans {
     private static List<Double> load(String path) {
         List<Double> list = new ArrayList<>();
         try {
-            BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+            BufferedReader br = new BufferedReader(new FileReader(path));
             String line = null;
             while((line = br.readLine()) != null) {
                 Double value = Double.parseDouble(line);
