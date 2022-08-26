@@ -54,7 +54,7 @@ public class NetMoney {
         final int INCOME = 0;
         final int SPEND = 1;
         clusters.forEach(cluster -> {
-            cluster.members.forEach(member -> {
+            cluster.members().forEach(member -> {
                 System.out.println(member[INCOME]+","+member[SPEND]);
             });
             System.out.println("###");

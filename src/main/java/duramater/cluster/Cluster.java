@@ -28,17 +28,11 @@ import java.util.List;
  * A cluster is just its centroid and its members.
  * @author Ron.Coleman
  */
-public class Cluster {
-    final public Double[] centroid;
-    final public List<Double[]> members;
 
-    /**
-     * Constructor
-     * @param centroid Cluster centroid
-     * @param members Cluster members
-     */
-    public Cluster(Double[] centroid, List<Double[]> members) {
-        this.centroid = centroid;
-        this.members = members;
-    }
-}
+/**
+ * A cluster is just its centroid and its members.
+ * Size of centroid and each member assumed to be the same.
+ * @param centroid Centroid
+ * @param members Members
+ */
+public record Cluster(Double[] centroid,List<Double[]> members) {}

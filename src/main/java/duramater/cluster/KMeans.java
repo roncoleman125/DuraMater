@@ -66,7 +66,7 @@ public class KMeans {
             data.forEach(observation -> { assign(observation); });
 
             // Sequence of sizes, if they don't change then clustering has converged
-            clusters.forEach(cluster -> { crc.update(cluster.members.size()); });
+            clusters.forEach(cluster -> { crc.update(cluster.members().size()); });
 
             // If the has changed, try one more time
             long newHash = crc.getValue();
@@ -92,9 +92,9 @@ public class KMeans {
      */
     void recenter() {
         clusters.forEach(cluster -> {
-            Double[] centroid = cluster.centroid;
+            Double[] centroid = cluster.centroid();
 
-            List<Double[]> members = cluster.members;
+            List<Double[]> members = cluster.members();
 
             int numCols = centroid.length;
             int numRows = members.size();
@@ -143,11 +143,11 @@ public class KMeans {
         int nearest = IntStream
                 .range(0,clusters.size())
                 .reduce((a,b) ->
-                        getDist(clusters.get(a).centroid,candidate) < getDist(clusters.get(b).centroid,candidate)?a:b)
+                        getDist(clusters.get(a).centroid(),candidate) < getDist(clusters.get(b).centroid(),candidate)?a:b)
                 .getAsInt();
 
         // Nearest is a cluster index
-        clusters.get(nearest).members.add(candidate);
+        clusters.get(nearest).members().add(candidate);
     }
 
     /**
