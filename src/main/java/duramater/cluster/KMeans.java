@@ -32,18 +32,18 @@ import java.util.zip.CRC32;
  * @author Ron.Coleman
  */
 public class KMeans {
-    public final int MAX_ITERATIONS = 300;
+    public final int MAX_ITERATIONS = 100;
 
-    int k;
-    List<Double[]> data;
-    List<Cluster> clusters = new ArrayList<>();
+    final int k;
+    final List<Double[]> data;
+    final List<Cluster> clusters = new ArrayList<>();
 
     /**
      * Constructor
      * @param k Number of clusters
      * @param data Data to be clustered
      */
-    public KMeans(int k, List<Double[]> data) {
+    public KMeans(final int k, List<Double[]> data) {
         this.k = k;
         this.data = data;
     }
