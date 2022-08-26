@@ -29,8 +29,8 @@ import java.util.List;
  * @author Ron.Coleman
  */
 public class Cluster {
-    public Double[] centroid = null;
-    List<Double[]> members = null;
+    final public Double[] centroid;
+    final public List<Double[]> members;
 
     /**
      * Constructor
