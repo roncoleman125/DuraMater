@@ -65,7 +65,7 @@ public class KMeans {
             // Put each observation in its cluster
             data.forEach(observation -> { assign(observation); });
 
-            // Sequence of sizes, if they don't change then clustering has converge
+            // Sequence of sizes, if they don't change then clustering has converged
             clusters.forEach(cluster -> { crc.update(cluster.members.size()); });
 
             // If the has changed, try one more time
