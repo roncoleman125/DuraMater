@@ -20,12 +20,15 @@ public class OutlierDetector {
     List<DoublePoint> points;
 
     public OutlierDetector(final List<Double[]> data) {
+        data.add(new Double[]{1000.0,1000.0});
+
         this.data = data;
     }
 
     public void train() {
         init();
-        DBSCANClusterer clusterer = new DBSCANClusterer(1,2);
+
+        DBSCANClusterer clusterer = new DBSCANClusterer(10,2);
 
         clusters = clusterer.cluster(points);
     }
@@ -35,6 +38,7 @@ public class OutlierDetector {
 
         points.forEach(point -> {
             boolean found = false;
+
             for(Cluster cluster: clusters) {
                 List<DoublePoint> clustered = cluster.getPoints();
                 if(clustered.contains(point)) {
@@ -45,18 +49,19 @@ public class OutlierDetector {
             if(!found) {
                 double income = point.getPoint()[0];
                 double spend = point.getPoint()[1];
-                for(Double[]pair: outliers) {
-                    if(pair[0] == income && pair[1] == spend) {
-                        outliers.add(new Double[] {income, spend});
-                    }
-                }
+//                for(Double[]pair: outliers) {
+//                    if(pair[0] != income && pair[1] == spend) {
+//                        outliers.add(new Double[] {income, spend});
+//                    }
+//                }
+                outliers.add(new Double[]{income,spend});
             }
         });
         return outliers;
     }
 
     void init() {
-        Collections.shuffle(data);
+//        Collections.shuffle(data);
         points = new ArrayList<>();
         data.forEach(datum -> {
             points.add(new DoublePoint(new double[] {datum[0], datum[1]}));
