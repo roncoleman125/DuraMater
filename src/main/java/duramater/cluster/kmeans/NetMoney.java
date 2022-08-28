@@ -20,11 +20,13 @@
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package duramater.cluster;
+package duramater.cluster.kmeans;
 
 import de.unknownreality.dataframe.DataFrame;
 import de.unknownreality.dataframe.csv.CSVReader;
 import de.unknownreality.dataframe.csv.CSVReaderBuilder;
+import duramater.cluster.ClusterHelper;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +40,7 @@ public class NetMoney {
     public static void main(String[] args) {
 
         // Load the data
-        List<Double[]> data = load();
+        List<Double[]> data = ClusterHelper.load("data/KMeans Dataset.csv");
 
         // 3 clusters corresponding to wasteful, moderate, and thrifty
         // But...the data also has 3 variables: income, spend, and net money
@@ -59,31 +61,5 @@ public class NetMoney {
             });
             System.out.println("###");
         });
-    }
-
-    /**
-     * Loads the data.
-     * @return Data as list of 3D arrays.
-     */
-    public static List<Double[]> load() {
-        CSVReader csvReader = CSVReaderBuilder.create()
-                .containsHeader(true)
-                .withSeparator(',')
-                .setColumnType("INCOME", Double.class)
-                .setColumnType("SPEND", Double.class)
-                .build();
-        DataFrame frame = DataFrame.load(new File("data/KMeans Dataset.csv"), csvReader);
-
-        List<Double[]> data = new ArrayList<>();
-
-        frame.rows().forEach(row -> {
-            double income = row.getDouble(0);
-            double spend = row.getDouble(1);
-            double net =  income - spend;
-            Double[] observation = {income,spend,net};
-            data.add(observation);
-        });
-
-        return data;
     }
 }

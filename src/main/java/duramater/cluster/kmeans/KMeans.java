@@ -20,7 +20,7 @@
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package duramater.cluster;
+package duramater.cluster.kmeans;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,7 @@ public class KMeans {
      * @param k Number of clusters
      * @param data Data to be clustered
      */
-    public KMeans(final int k, List<Double[]> data) {
+    public KMeans(final int k, final List<Double[]> data) {
         this.k = k;
         this.data = data;
     }
