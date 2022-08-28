@@ -22,6 +22,8 @@
  */
 package duramater.cluster.kmeans;
 
+import duramater.cluster.util.ClusterHelper;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -143,27 +145,12 @@ public class KMeans {
         int nearest = IntStream
                 .range(0,clusters.size())
                 .reduce((a,b) ->
-                        getDist(clusters.get(a).centroid(),candidate) < getDist(clusters.get(b).centroid(),candidate)?a:b)
+                        ClusterHelper.getDist(clusters.get(a).centroid(),candidate) < ClusterHelper.getDist(clusters.get(b).centroid(),candidate)?a:b)
                 .getAsInt();
 
         // Nearest is a cluster index
         clusters.get(nearest).members().add(candidate);
     }
-
-    /**
-     * Gets the distance between a, b vectors.
-     * @param a Vector
-     * @param b Vector
-     * @return Distance
-     */
-    double getDist(Double[] a, Double[] b) {
-        double dist2 = 0;
-        for(int i=0; i < a.length; i++) {
-            dist2 += (a[i]-b[i])*(a[i]-b[i]);
-        }
-        return dist2;
-    }
-
 
     /**
      * Gets the clusters.

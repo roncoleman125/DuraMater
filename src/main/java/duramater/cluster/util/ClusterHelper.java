@@ -1,4 +1,4 @@
-package duramater.cluster;
+package duramater.cluster.util;
 
 import de.unknownreality.dataframe.DataFrame;
 import de.unknownreality.dataframe.csv.CSVReader;
@@ -33,5 +33,19 @@ public class ClusterHelper {
         });
 
         return data;
+    }
+
+    /**
+     * Gets the distance between a, b vectors.
+     * @param a Vector
+     * @param b Vector
+     * @return Distance
+     */
+    public static double getDist(Double[] a, Double[] b) {
+        double dist2 = 0;
+        for(int i=0; i < a.length; i++) {
+            dist2 += (a[i]-b[i])*(a[i]-b[i]);
+        }
+        return dist2;
     }
 }

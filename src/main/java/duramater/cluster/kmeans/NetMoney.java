@@ -22,13 +22,8 @@
  */
 package duramater.cluster.kmeans;
 
-import de.unknownreality.dataframe.DataFrame;
-import de.unknownreality.dataframe.csv.CSVReader;
-import de.unknownreality.dataframe.csv.CSVReaderBuilder;
-import duramater.cluster.ClusterHelper;
+import duramater.cluster.util.ClusterHelper;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

@@ -1,38 +1,53 @@
 package duramater.cluster.spatial;
 
-import duramater.cluster.ClusterHelper;
+import duramater.cluster.util.ClusterHelper;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import org.apache.commons.math3.ml.clustering.DoublePoint;
-
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
- * Outlier detector.
+ * Detects outliners using spatial clustering.
  * @author Ron.Coleman
  * @see <a href="https://www.demo2s.com/java/apache-commons-dbscanclusterer-tutorial-with-examples.html>Apache Commons DBSCANClusterer tutorial with examples</a>
  */
 public class OutlierDetector {
+    // Min (Euclidean) distance between clusters because 10 nice number.
+    public final double EPSILON = 10;
+
+    // Min members of cluster -- seems reasonable for clusters.
+    public final int MIN_PTS = 2;
+
     final List<Double[]> data;
     List<Cluster> clusters;
     List<DoublePoint> points;
+    double eps = 10;
+    int minPts = MIN_PTS;
 
+
+    /**
+     * Constructor
+     * @param data Data in which to detect outliers.
+     */
     public OutlierDetector(final List<Double[]> data) {
-        data.add(new Double[]{1000.0,1000.0});
-
         this.data = data;
     }
 
+    /**
+     * Trains on finding outliers.
+     */
     public void train() {
         init();
 
-        DBSCANClusterer clusterer = new DBSCANClusterer(10,2);
+        DBSCANClusterer clusterer = new DBSCANClusterer(eps,minPts);
 
         clusters = clusterer.cluster(points);
     }
 
+    /**
+     * Gets outliers.
+     * @return Set of outliers.
+     */
     public Set<Double[]> getOutliers() {
         Set<Double[]> outliers = new HashSet<>();
 
@@ -49,30 +64,59 @@ public class OutlierDetector {
             if(!found) {
                 double income = point.getPoint()[0];
                 double spend = point.getPoint()[1];
-//                for(Double[]pair: outliers) {
-//                    if(pair[0] != income && pair[1] == spend) {
-//                        outliers.add(new Double[] {income, spend});
-//                    }
-//                }
                 outliers.add(new Double[]{income,spend});
             }
         });
         return outliers;
     }
 
+    public Double[] getUpperFences() {
+        Double[] origin = {0.,0.};
+        double upper = -Double.MAX_VALUE;
+//        double lower = Double.MAX_VALUE;
+        DoublePoint upperPoint = null;
+        for(Cluster cluster: clusters) {
+            List<DoublePoint> points = cluster.getPoints();
+            for(DoublePoint point: points) {
+                double l2 = ClusterHelper.getDist(new Double[]{point.getPoint()[0],point.getPoint()[1]},origin);
+                if(l2>upper) {
+                    upper = l2;
+                    upperPoint = point;
+                }
+
+            }
+        }
+        return new Double[] {upperPoint.getPoint()[0],upperPoint.getPoint()[1]};
+    }
+
+    public Double[] getLowerFences() {
+        Double[] origin = {0.,0.};
+//        double upper = -Double.MAX_VALUE;
+        double lower = Double.MAX_VALUE;
+        DoublePoint lowerPoint = null;
+        for(Cluster cluster: clusters) {
+            List<DoublePoint> points = cluster.getPoints();
+            for(DoublePoint point: points) {
+                double l2 = ClusterHelper.getDist(new Double[]{point.getPoint()[0],point.getPoint()[1]},origin);
+                if(l2<lower) {
+                    lower = l2;
+                    lowerPoint = point;
+                }
+
+            }
+        }
+        return new Double[] {lowerPoint.getPoint()[0],lowerPoint.getPoint()[1]};
+    }
+
+    /**
+     * Initializes the internal data structures -- invoke prior to train.
+     */
     void init() {
-//        Collections.shuffle(data);
+        Collections.shuffle(data);
         points = new ArrayList<>();
         data.forEach(datum -> {
             points.add(new DoublePoint(new double[] {datum[0], datum[1]}));
         });
-//        List<Double[]> deltas = IntStream.range(1,data.size()).mapToObj(idx -> {
-//            Double[] delta = new Double[]{
-//                    data.get(idx)[0]-data.get(idx-1)[0],
-//                    data.get(idx)[1]-data.get(idx-1)[1]
-//            };
-//            return delta;
-//        }).collect(Collectors.toList());
     }
 
     public static void main(String[] args) {
@@ -80,6 +124,14 @@ public class OutlierDetector {
         OutlierDetector od = new OutlierDetector(data);
         od.train();
         Set<Double[]> outliers = od.getOutliers();
-        System.out.println(outliers);
+        outliers.forEach(outlier -> {
+            System.out.printf("%5.2f %5.2f\n",outlier[0],outlier[1]);
+        });
+
+        Double[] upperFences = od.getUpperFences();
+        Double[] lowerFences = od.getLowerFences();
+        System.out.println("fences:");
+        System.out.printf("%5.2f %5.2f\n",upperFences[0],upperFences[1]);
+        System.out.printf("%5.2f %5.2f\n",lowerFences[0],lowerFences[1]);
     }
 }
