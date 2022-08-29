@@ -19,7 +19,7 @@ public class OutlierDetector {
     public final int MIN_PTS = 2;
 
     final List<Double[]> data;
-    List<Cluster> clusters;
+    List<Cluster<DoublePoint>> clusters;
     List<DoublePoint> points;
     double eps = 10;
     int minPts = MIN_PTS;
@@ -42,6 +42,10 @@ public class OutlierDetector {
         DBSCANClusterer clusterer = new DBSCANClusterer(eps,minPts);
 
         clusters = clusterer.cluster(points);
+    }
+
+    public List<Cluster<DoublePoint>> getClusters() {
+        return clusters;
     }
 
     /**
@@ -123,6 +127,8 @@ public class OutlierDetector {
         List<Double[]> data = ClusterHelper.load("data/KMeans Dataset.csv");
         OutlierDetector od = new OutlierDetector(data);
         od.train();
+
+        System.out.println("outliers");
         Set<Double[]> outliers = od.getOutliers();
         outliers.forEach(outlier -> {
             System.out.printf("%5.2f %5.2f\n",outlier[0],outlier[1]);
@@ -131,7 +137,14 @@ public class OutlierDetector {
         Double[] upperFences = od.getUpperFences();
         Double[] lowerFences = od.getLowerFences();
         System.out.println("fences:");
-        System.out.printf("%5.2f %5.2f\n",upperFences[0],upperFences[1]);
-        System.out.printf("%5.2f %5.2f\n",lowerFences[0],lowerFences[1]);
+        System.out.printf("%5.2f, %5.2f\n",upperFences[0],upperFences[1]);
+        System.out.printf("%5.2f, %5.2f\n",lowerFences[0],lowerFences[1]);
+
+        od.getClusters().forEach(cluster -> {
+            System.out.println("###");
+            cluster.getPoints().forEach(point -> {
+                System.out.printf("%5.2f, %5.2f\n",point.getPoint()[0],point.getPoint()[1]);
+            });
+        });
     }
 }
