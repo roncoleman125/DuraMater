@@ -42,6 +42,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static duramater.util.EncogHelper.LOG_FREQUENCY;
+import static duramater.util.EncogHelper.MAX_EPOCHS;
+
 /**
  * This program was evolved from XorHelloWorld to train and test an MLP on iris data.
  * @author Ron.Coleman
@@ -110,13 +113,12 @@ public class RonzMlpIris {
 
         double minError = Double.MAX_VALUE;
 
-        int sameCount = 0;
-
         double error = 0.0;
 
-        final int MAX_SAME_COUNT = 5*EncogHelper.LOG_FREQUENCY;
+        int sameCount = 0;
+        final int MAX_SAME_COUNT = 5*LOG_FREQUENCY;
 
-        EncogHelper.log(epoch, error, false, false);
+        EncogHelper.log(epoch, error,false, false);
         do {
             training.iteration();
 
@@ -131,12 +133,12 @@ public class RonzMlpIris {
             else
                 sameCount++;
 
-            if(sameCount >= MAX_SAME_COUNT)
+            if(sameCount > MAX_SAME_COUNT)
                 break;
 
             EncogHelper.log(epoch, error,false,false);
 
-        } while (error > TOLERANCE && epoch < EncogHelper.MAX_EPOCHS);
+        } while (error > TOLERANCE && epoch < MAX_EPOCHS);
 
         training.finishTraining();
         EncogHelper.log(epoch, error,sameCount >= MAX_SAME_COUNT, true);
