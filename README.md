@@ -10,8 +10,8 @@
 
 We argue AI and Java by their nature are complex.
 Thus, we put forward two hypotheses as the antidote:
-1. There is objective truth.   
-2. It is more effective to start with basic truths -- this is our
+1. There is objective knowable truth.   
+2. It is more effective to start with basic objective knowable truths -- this is our
    [crawl-before-one-walks](https://en.wiktionary.org/wiki/crawl_before_one_walks) theory of education.
 
 This project is an original introduction to AI using Java.
