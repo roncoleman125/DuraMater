@@ -5,9 +5,10 @@ import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import org.apache.commons.math3.ml.clustering.DoublePoint;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
- * Detects outliners using spatial clustering.
+ * Detects outliers using spatial clustering.
  * @author Ron.Coleman
  * @see <a href="https://www.demo2s.com/java/apache-commons-dbscanclusterer-tutorial-with-examples.html>Apache Commons DBSCANClusterer tutorial with examples</a>
  */
@@ -116,7 +117,8 @@ public class OutlierDetector {
      * Initializes the internal data structures -- invoke prior to train.
      */
     void init() {
-        Collections.shuffle(data);
+        Random ran = new Random(0);
+        Collections.shuffle(data,ran);
         points = new ArrayList<>();
         data.forEach(datum -> {
             points.add(new DoublePoint(new double[] {datum[0], datum[1]}));
@@ -128,22 +130,28 @@ public class OutlierDetector {
         OutlierDetector od = new OutlierDetector(data);
         od.train();
 
-        System.out.println("outliers");
+        report(od);
+    }
+
+    public static void report(OutlierDetector od) {
         Set<Double[]> outliers = od.getOutliers();
+        System.out.println("outliers: "+outliers.size());
         outliers.forEach(outlier -> {
-            System.out.printf("%5.2f %5.2f\n",outlier[0],outlier[1]);
+            System.out.printf("%6.0f %6.0f\n",outlier[0],outlier[1]);
         });
 
         Double[] upperFences = od.getUpperFences();
         Double[] lowerFences = od.getLowerFences();
         System.out.println("fences:");
-        System.out.printf("%5.2f, %5.2f\n",upperFences[0],upperFences[1]);
-        System.out.printf("%5.2f, %5.2f\n",lowerFences[0],lowerFences[1]);
+        System.out.printf("%6.0f, %6.0f\n",upperFences[0],upperFences[1]);
+        System.out.printf("%6.0f, %6.0f\n",lowerFences[0],lowerFences[1]);
 
-        od.getClusters().forEach(cluster -> {
-            System.out.println("###");
+        List<Cluster<DoublePoint>> clusters = od.getClusters();
+        IntStream.range(0, clusters.size()).forEach(idx -> {
+            Cluster<DoublePoint> cluster = clusters.get(idx);
+            System.out.println("### cluster: "+idx);
             cluster.getPoints().forEach(point -> {
-                System.out.printf("%5.2f, %5.2f\n",point.getPoint()[0],point.getPoint()[1]);
+                System.out.printf("%6.0f %6.0f\n",point.getPoint()[0],point.getPoint()[1]);
             });
         });
     }

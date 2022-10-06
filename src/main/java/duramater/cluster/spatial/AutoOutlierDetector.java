@@ -1,14 +1,8 @@
 package duramater.cluster.spatial;
 
 import duramater.cluster.util.ClusterHelper;
-import org.apache.commons.math3.ml.clustering.Cluster;
-import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
-import org.apache.commons.math3.ml.clustering.DoublePoint;
 import org.apache.commons.math3.stat.StatUtils;
-
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 /**
@@ -31,16 +25,15 @@ public class AutoOutlierDetector extends OutlierDetector {
     void init() {
         super.init();
 
-
         List<Double[]> samples = data.subList(0,NUM_SAMPLES);
 
-        Collections.shuffle(samples);
+        Random ran = new Random(1);
+        Collections.shuffle(samples,ran);
 
         double[] array = IntStream
                 .range(1,samples.size())
                 .mapToDouble(idx -> ClusterHelper.getDist(samples.get(idx),samples.get(idx-1)))
                 .toArray();
-
 
         double l2 = StatUtils.percentile(array,PERCENTILE_DISTANCES);
         double eps = Math.sqrt(l2);
@@ -49,9 +42,16 @@ public class AutoOutlierDetector extends OutlierDetector {
 
     public static void main(String[] args) {
         List<Double[]> data = ClusterHelper.load("data/KMeans Dataset.csv");
-        OutlierDetector od = new AutoOutlierDetector(data);
-        od.train();
-        Set<Double[]> outliers = od.getOutliers();
-        System.out.println(outliers);
+        OutlierDetector autood = new AutoOutlierDetector(data);
+        autood.train();
+
+        report(autood);
+//        Set<Double[]> outliers = od.getOutliers();
+//        System.out.println("outliers: "+outliers.size());
+//        System.out.printf("%6s %6s\n","INCOME","SPEND");
+//
+//        outliers.stream().forEach(outlier -> {
+//            System.out.printf("%6.0f %6.0f\n",outlier[0],+outlier[1]);
+//        });
     }
 }
