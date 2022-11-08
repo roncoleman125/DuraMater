@@ -35,12 +35,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-
 /**
- * This program was evolved from XorHelloWorld to train and test an MLP on iris data.
- *
+ * This program test nearest-neighbor search on iris data.
  * @author Ron.Coleman
- * @date 29.Oct.2019
+ * @date 8.Nov.2022
  */
 public class RonzNnIris {
     record Candidate(int no, double[] pt, double dist) {
@@ -53,11 +51,6 @@ public class RonzNnIris {
 
     final static double NORMALIZED_HI = 1;
     final static double NORMALIZED_LO = -1;
-
-    /**
-     * Error tolerance
-     */
-    public final static double TOLERANCE = 0.01;
 
     // Matrices will contain training & pt data
     double TRAINING_INPUTS[][] = null;
@@ -147,7 +140,6 @@ public class RonzNnIris {
         // Singleton map contains the votes map with one element/vote
         return new Nearest(candidate,Collections.singletonMap(candidate.no(),1));
     }
-
 
     /**
      * Get distance between two vectors.

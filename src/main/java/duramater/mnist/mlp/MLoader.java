@@ -5,7 +5,9 @@ import org.encog.mathutil.Equilateral;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Random;
+import java.util.stream.IntStream;
 import java.util.zip.CRC32;
 
 public class MLoader implements IMLoader {
@@ -22,7 +24,6 @@ public class MLoader implements IMLoader {
 
     @Override
     public MDigit[] load() {
-        MDigit[] digits = null;
         try {
             DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(dataPath)));
             this.pixelsMagic = dataInputStream.readInt();
@@ -37,29 +38,39 @@ public class MLoader implements IMLoader {
 
             assert (nDigits == nLabels);
 
-            digits = new MDigit[nDigits];
+            final MDigit[] digits = new MDigit[nDigits];
 
-            for (int digitno = 0; digitno < nDigits; digitno++) {
-                double[] pixels = new double[nRows * nCols];
+            crc.reset();
 
-                int label = labelInputStream.readUnsignedByte();
-                for (int r = 0; r < nRows; r++) {
-                    for (int c = 0; c < nCols; c++) {
-                        int pixel = dataInputStream.readUnsignedByte();
-                        crc.update(pixel);
-                        pixels[nCols * r + c] = pixel;
-                    }
+            IntStream.range(0,nDigits).forEach(digitno -> {
+                int label = -1;
+                try {
+                    label = labelInputStream.readUnsignedByte();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
+
+                double[] pixels = new double[nRows * nCols];
+                IntStream.range(0,nRows*nCols).forEach(idx -> {
+                    try {
+                        double pixel = dataInputStream.readUnsignedByte();
+                        pixels[idx] = pixel;
+                        crc.update((int)pixel);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
                 digits[digitno] = new MDigit(digitno, pixels, label);
-            }
+            });
 
             dataInputStream.close();
             labelInputStream.close();
+            return digits;
         }
         catch(Exception e) {
             e.printStackTrace();
         }
-        return digits;
+        return null;
     }
 
     @Override

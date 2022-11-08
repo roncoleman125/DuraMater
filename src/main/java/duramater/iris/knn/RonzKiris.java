@@ -26,27 +26,36 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-
 /**
- * This program was evolved from XorHelloWorld to train and test an MLP on iris data.
- *
+ * This program test k-nearest-neighbor search.
  * @author Ron.Coleman
- * @date 29.Oct.2019
+ * @date 8.Nov.2022
  */
 public class RonzKiris extends RonzNnIris {
+    // This is the k-value.
+    public final static int NUM_TOP_CANDIDATES = 5;
+
     /**
      * The main method.
-     *
      * @param args No arguments are used.
      */
     public static void main(final String args[]) {
         new RonzKiris().go();
     }
 
+    /**
+     * Gets the nearest answer.
+     * @param target Target
+     * @param model Model of all elements
+     * @return Nearest
+     */
     @Override
     Nearest getNearest(double[] target,double[][] model) {
+        // Get the sorted candidates
         List<Candidate> candidates = getCandidates(target,model);
-        final int k = 5;
+
+        // Get top candidates
+        final int k = NUM_TOP_CANDIDATES;
         Map<Integer, Integer> votes = new HashMap<>();
         IntStream.range(0, k).forEach(idx -> {
             int candidate = eq.decode(TRAINING_IDEALS[candidates.get(idx).no()]);
@@ -54,6 +63,7 @@ public class RonzKiris extends RonzNnIris {
             votes.put(candidate, freq + 1);
         });
 
+        // Winner is one with most votes, though there may be ties at the top.
         int winner = votes.entrySet().stream().sorted((e1, e2) -> {
             if (e1.getValue() > e2.getValue())
                 return 1;
@@ -61,11 +71,16 @@ public class RonzKiris extends RonzNnIris {
                 return -1;
         }).collect(Collectors.toList()).get(0).getKey();
 
-        Candidate popular = candidates.get(winner);
-        return new Nearest(popular, votes);
+        Candidate mostPopular = candidates.get(winner);
+        return new Nearest(mostPopular, votes);
     }
 
-
+    /**
+     * Gets the best candidates from the model.
+     * @param target Goal
+     * @param model Trained model
+     * @return Candidates sorted in descending order.
+     */
     List<Candidate> getCandidates(double[] target, double[][] model) {
         // Sort candidates by distance to target
         List<Candidate> candidates =
