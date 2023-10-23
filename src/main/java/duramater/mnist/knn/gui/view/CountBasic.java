@@ -27,7 +27,9 @@ import duramater.mnist.knn.gui.model.MnistMatrix;
 import duramater.mnist.knn.gui.model.MatrixType;
 import duramater.mnist.knn.gui.model.MnistDataReader;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -44,6 +46,7 @@ public class CountBasic extends JFrame implements IObserver {
      */
     public CountBasic() {
         try {
+            setIconImage(ImageIO.read(new File("images/count-1.png")));
             load(this);
 
             render();
