@@ -28,7 +28,8 @@ public class MnistTrainNetwork {
 
     public final static int NUM_SAMPLES = 2000;
 
-    public final static String netPath = "c:/marist/tmp/encogmnist-"+NUM_SAMPLES+".bin";
+    public final static String IN_DIR = System.getProperty("indir","c:/tmp");
+    public final static String NET_PATH = IN_DIR + "/encogmnist-"+NUM_SAMPLES+".bin";
 
     /**
      * The main method.
@@ -36,6 +37,7 @@ public class MnistTrainNetwork {
      */
     public static void main(final String args[]) throws Exception {
         System.out.println("started: "+new Date());
+        System.out.println("model: "+NET_PATH);
 
         ////////////////
 //        MnistMatrix[] mnistTrainMatrix = new MnistDataReader().readData("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
@@ -94,7 +96,7 @@ public class MnistTrainNetwork {
             if(error < minError) {
                 minError = error;
                 sameCount = 1;
-                EncogDirectoryPersistence.saveObject(new File(netPath),network);
+                EncogDirectoryPersistence.saveObject(new File(NET_PATH),network);
             }
             else
                 sameCount++;
@@ -110,7 +112,7 @@ public class MnistTrainNetwork {
         training.finishTraining();
 
         if(error < minError)
-            EncogDirectoryPersistence.saveObject(new File(netPath), network);
+            EncogDirectoryPersistence.saveObject(new File(NET_PATH), network);
 
         MExercise mv = new MExercise(network,trainingSet);
         MExercise.Report report = mv.report();

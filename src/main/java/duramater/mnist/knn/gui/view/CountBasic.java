@@ -33,7 +33,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Runs Count Basic.
+ * Runs Count Basic gui.
  */
 public class CountBasic extends JFrame implements IObserver {
     static protected MnistMatrix[] candidateMatrices;
